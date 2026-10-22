@@ -98,6 +98,12 @@
 - H4-6: Owner 발언을 원문 그대로 인용하고 작업자 해석을 분리.
 - H3-5 잔여: 데이터 계약 §10에 `defaultLiteral` 투영 행 추가.
 
+### 12. P01 2단계 — IDE 레이아웃
+
+- 파일: `src/ui/explorer/fileTree.ts`(+`.test.ts`), `src/ui/explorer/Explorer.tsx`, `src/ui/tabs/Tabs.tsx`, `src/ui/terminal/Terminal.tsx`, `src/ui/statusbar/StatusBar.tsx`, `src/app/App.tsx`, `src/app/App.css`, `src/app/sampleFiles.ts`
+- 주요 내용: 경로 목록 → 폴더 트리 변환을 순수 함수로 분리(폴더 먼저·이름순). Explorer 폴더 접기/펼치기, 파일 클릭으로 탭 열기. 탭 전환·닫기(닫으면 오른쪽 이웃, 없으면 왼쪽). Terminal 패널은 줄 목록 표시만. Status Bar에 활성 파일·UTF-8·Python. 편집기 자리는 3단계 전까지 `<pre>`. 탭 "수정됨(●)" 표시는 편집이 생기는 3단계에서 붙임.
+- 검증: `npm test` 4개 통과(종료 코드 0, 검증 지적 H12 해소) — 중첩 경로가 폴더 하나로 묶이는지(과소 엄격), 루트 파일이 사라지거나 잘못 중첩되지 않는지(과잉 엄격). `npm run build`·`npm run lint` 통과. Playwright로 미리보기 서버에서 파일 열기 → 탭 3개, 활성 탭 닫기 → 이웃 탭 활성, 폴더 접기 → 하위 파일 숨김, 콘솔 오류 없음 확인.
+
 ## 발견한 문제
 
 | 문제 | 원인 | 처리 | 결과 |
@@ -130,5 +136,4 @@
 
 ## 다음 단계
 
-1. P01 2단계: IDE 레이아웃
-2. P01 3단계: Monaco 연결·단축키
+1. P01 3단계: Monaco 연결·다크 테마·`Ctrl/Cmd+Enter`·탭 수정 표시
