@@ -1,10 +1,10 @@
 # HANDOFF
 
-> 마지막 자가 검수: 2026-10-22 · 25줄
+> 마지막 자가 검수: 2026-10-22 · 24줄
 
 ## 현재 상태
 
-- 제품 기준: [`docs/SOT.md`](docs/SOT.md) v0.4 (우선순위 트리는 SoT §1). 미결 Owner 결정 없음.
+- 제품 기준: [`docs/SOT.md`](docs/SOT.md) v0.5 (우선순위 트리는 SoT §1). 미결 Owner 결정 없음.
 - 아키텍처: [`docs/architecture/`](docs/architecture/)
 - 페이즈: [`docs/phases/00_index.md`](docs/phases/00_index.md) — **P01 (IDE 셸) 진행 중**
 - 코드: Vite + React + TS 골격만 있음. `src/main.tsx` → `src/app/App.tsx`(빈 화면). 테스트 파일 없음.
@@ -13,11 +13,10 @@
 ## 주의 사항
 
 - `docs/plan/ideation.md`는 원천 기획으로 수정하지 않는다. SoT와 충돌하면 SoT가 우선이다.
-- 아키텍처의 "진행 상태 = `choices` 기록만 저장, 나머지는 재생으로 파생" 설계는 Owner 검토 전이다. P03 선행 조건으로 걸어 둠.
 - `npm test`는 테스트 파일이 없으면 실패한다(Vitest 기본 동작). P01 2단계에서 첫 테스트가 생기며, 통과가 P01 완료 조건이다.
 - `npm run lint`는 경고도 실패로 처리한다(`--deny-warnings`).
-- 독립 검증 기록: `docs/verifications/2026-10-22/` — 2차 재검증 중.
-- SoT 내용 변경은 Owner 합의가 있어야 한다(SoT §1).
+- 독립 검증 기록: `docs/verifications/2026-10-22/` — 3차 재검증 중.
+- SoT 내용 변경은 Owner 합의가 있어야 한다. Owner가 위임한 판단의 결과도 합의로 본다(SoT §1).
 
 ## 다음 작업
 

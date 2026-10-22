@@ -17,7 +17,7 @@ ideation §11의 "첫 번째 프로토타입"을 만든다. **코드 편집 → 
 - Input Parser 1차 구현 ([아키텍처 §6](../architecture/00_overview.md#6-input-parser-규칙-mvp)): 원문 리터럴 해석, 허용값 검증, 오류 메시지
 - Editor 편집 제한: `action` 값 영역 밖 입력 차단, 값 영역 텍스트를 편집 값으로 전달 (DB-02)
 - 편집 가능한 값 영역의 시각 표시(옅은 밑줄 등) 여부 결정 — R-01 범위 안에서
-- `Ctrl/Cmd+Enter` → parser → 선택값별 Terminal 로그. `main.py`가 활성 탭이 아니면 Terminal 안내만 (SoT §3.5)
+- `Ctrl/Cmd+Enter` → parser → 선택값별 Terminal 로그. 현재 사건의 파일(P02에서는 `main.py`, 해결 후에는 `event_002.py`)이 활성 탭이 아니면 Terminal 안내만 (SoT §3.5)
 - 유효한 선택 시 Explorer에 `event_002.py` 추가 (팝업·전환 없음, R-05)
 - `event_002.py` 클릭 시 다음 사건 표시
 - 잘못된 값 입력 시 Terminal 오류, 상태 변화 없음 (AC-07 초기 확인)
@@ -28,6 +28,7 @@ ideation §11의 "첫 번째 프로토타입"을 만든다. **코드 편집 → 
 - 시연: `action` 값 수정 → 실행 → 로그 → 새 파일 생성 → 열기
 - parser 단위 테스트: 유효 값 3종 통과, 범위 밖·리터럴 아님·타입 불일치 각 오류 반환 — 과소/과잉 엄격 양방향
 - 잘못된 값 실행 후 Terminal 오류 출력 외에는 Explorer·파일 내용·진행 상태 모두 변하지 않음을 확인
+- 현재 사건 파일이 아닌 탭에서 실행하면 Terminal 안내 한 줄만 나오고 상태가 변하지 않음을 확인 (SoT §3.5)
 
 ## 병행 가능 작업 / 제외
 

@@ -1,6 +1,6 @@
 # 데이터 계약
 
-> 상태: **v0.3 초안** · 2026-10-22 · 상위 기준: [`../SOT.md`](../SOT.md), [`00_overview.md`](00_overview.md)
+> 상태: **v0.4** · 2026-10-22 · 상위 기준: [`../SOT.md`](../SOT.md), [`00_overview.md`](00_overview.md)
 > 작성 규칙: [`../guides/data-contracts.md`](../guides/data-contracts.md), [`../guides/api-and-persistence-schemas.md`](../guides/api-and-persistence-schemas.md)
 > 아래 타입은 계약의 모양을 보이기 위한 초안이다. 실제 정본은 구현 시 `src/engine/types.ts` 한 곳에 둔다(`SaveSnapshot`·`WorkspaceView`는 각각 `persistence/`·`ui/` 소유).
 
@@ -16,7 +16,7 @@
 | `Progress` | Story Engine | `apply()`만 | 플레이 전체 | 함 |
 | `DerivedState` | Story Engine | 없음 (계산 결과) | 계산 시점 | 안 함 |
 | `PlayerEdits` | EditorPane (플레이어) | 편집 이벤트만 | 플레이 전체 | 함 |
-| `WorkspaceView` (열린 탭, 활성 파일) | UI | UI만 | 플레이 전체 | 함 (새로고침 후 탭 복원, SoT §8 작업 가정) |
+| `WorkspaceView` (열린 탭, 활성 파일) | UI | UI만 | 플레이 전체 | 함 (새로고침 후 탭 복원, SoT §3.6) |
 | `SaveSnapshot` | Persistence 어댑터 | 어댑터만 | 저장소 | localStorage |
 
 ---
@@ -112,7 +112,7 @@ type Ending = { id: EndingId; log: LogLine[] };  // 엔딩 도달 시 Terminal �
 ## 4. 입력 계약 (Parser)
 
 ```ts
-// 입력: 현재 사건의 PlayerEdits 항목(필드명 → 원문 리터럴). 렌더된 파일 텍스트를 다시 파싱하지 않는다.
+// 입력: 필드명 → 원문 리터럴 맵 (PlayerEdits의 현재 사건 항목 + 편집 안 한 필드는 ValueSlot.defaultLiteral). 렌더된 파일 텍스트를 다시 파싱하지 않는다.
 type ParseResult =
   | { ok: true; choice: Choice }
   | { ok: false; errors: ParseError[] };
@@ -178,13 +178,14 @@ type FileView = {
 type ValueSlot = {
   sceneId: SceneId;
   field: string;
-  start: number;                    // text 안 문자 오프셋 (리터럴 시작)
+  start: number;                    // text 안 오프셋 (JS 문자열 인덱스, UTF-16 코드 단위). 리터럴 시작
   end: number;                      // 리터럴 끝 (미포함)
-  defaultLiteral: string;           // 템플릿에 적힌 기본값 원문. 기본값의 유일한 출처
+  defaultLiteral: string;           // 템플릿의 해당 줄에서 읽은 기본값 원문 (템플릿이 정본, 이 필드는 그 투영)
 };
 ```
 
-- 값 슬롯은 정적 템플릿의 사건 블록 안 `필드명 = 리터럴` 줄에서 계산한다. 슬롯의 위치·기본값은 Engine이 소유하고, UI는 읽기만 한다.
+- 값 슬롯은 정적 템플릿의 사건 블록 안 `필드명 = 리터럴` 줄에서 계산한다([아키텍처 §6.1](00_overview.md#61-값-슬롯-표식-규칙)). 슬롯의 위치·기본값은 Engine이 소유하고, UI는 읽기만 한다.
+- 플레이어 편집을 반영한 화면용 `FileView`는 Engine의 `applyEdits(fileView, edits)`가 만든다(슬롯 구간 치환 + 뒤 슬롯 오프셋 이동, [아키텍처 §6.2](00_overview.md#62-편집-반영-규칙)). 결과는 저장하지 않는다.
 
 - `derive(scenario, progress)`는 순수 함수다. 같은 입력이면 항상 같은 결과다.
 - MVP 분량(선택 수십 회)에서는 매번 처음부터 재생해도 비용이 무시할 수준이다. 캐시는 측정으로 필요가 확인될 때만 둔다.
