@@ -1,6 +1,6 @@
 # P04 — 시나리오 *Incident 02:14*
 
-**상태:** Planned · [인덱스](00_index.md)
+**상태:** In Progress · [인덱스](00_index.md)
 
 ## 목표
 

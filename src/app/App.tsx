@@ -3,7 +3,7 @@ import { derive } from '../engine/derive'
 import { applyEdits } from '../engine/slots'
 import type { FileView, LogLine, PlayerEdits, Progress, SceneId } from '../engine/types'
 import { createSaver, restore, saveKey, snapshot, type KeyValueStore, type WorkspaceView } from '../persistence/save'
-import { miniScenario } from '../scenario/mini'
+import { incident0214 } from '../scenario/incident-0214'
 import { CodeEditor } from '../ui/editor/CodeEditor'
 import { Explorer } from '../ui/explorer/Explorer'
 import { StatusBar } from '../ui/statusbar/StatusBar'
@@ -12,10 +12,10 @@ import { Terminal } from '../ui/terminal/Terminal'
 import { runScene } from './run'
 import './App.css'
 
-// The mini scenario drives the app until the real one lands (P04).
-const scenario = miniScenario
+const scenario = incident0214
 const startFile = scenario.stages.find((st) => st.sceneIds.includes(scenario.startSceneId))!.filePath
-const freshWorkspace: WorkspaceView = { openFiles: [startFile], activeFile: startFile }
+// A new game opens the instructions in main.py next to the first incident file.
+const freshWorkspace: WorkspaceView = { openFiles: ['main.py', startFile], activeFile: 'main.py' }
 
 function browserStorage(): KeyValueStore | null {
   try {

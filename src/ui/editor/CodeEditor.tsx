@@ -22,6 +22,9 @@ export function CodeEditor({ views, activeFile, onEdit, onRun }: Props) {
   const slotsRef = useRef<ValueSlot[]>([])
   // Set while this component itself changes a model, so its change handler ignores the event.
   const writingRef = useRef(false)
+  // Files whose engine text changed (or that were never shown) since they were last on screen:
+  // the next time they are shown, the current scene's value is scrolled into view.
+  const revealRef = useRef(new Set<string>())
   // Latest callbacks, so the editor created once never calls stale closures.
   const callbacksRef = useRef({ onEdit, onRun })
   useEffect(() => {
@@ -37,17 +40,28 @@ export function CodeEditor({ views, activeFile, onEdit, onRun }: Props) {
       folding: true,
       showFoldingControls: 'always',
       scrollBeyondLastLine: false,
+      // Only literal values are editable (DB-02). Auto-inserted pairs and suggestions would arrive
+      // as extra or multi-range edits that the slot guard rejects, eating what the player typed.
+      autoClosingBrackets: 'never',
+      autoClosingQuotes: 'never',
+      autoClosingOvertype: 'never',
+      autoSurround: 'never',
+      quickSuggestions: false,
+      suggestOnTriggerCharacters: false,
+      wordBasedSuggestions: 'off',
     })
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => callbacksRef.current.onRun())
     editorRef.current = editor
     decorationsRef.current = editor.createDecorationsCollection()
     const models = modelsRef.current
     const viewStates = viewStatesRef.current
+    const reveal = revealRef.current
     return () => {
       editor.dispose()
       for (const model of models.values()) model.dispose()
       models.clear()
       viewStates.clear()
+      reveal.clear()
       shownPathRef.current = null
       editorRef.current = null
       decorationsRef.current = null
@@ -71,7 +85,10 @@ export function CodeEditor({ views, activeFile, onEdit, onRun }: Props) {
     // holds the text — the player's own accepted edit — it is left alone so cursor and undo survive.
     for (const [path, model] of modelsRef.current) {
       const view = views[path]
-      if (view && model.getValue() !== view.text) write(model, view.text)
+      if (view && model.getValue() !== view.text) {
+        write(model, view.text)
+        revealRef.current.add(path)
+      }
     }
 
     const pathChanged = shownPathRef.current !== activeFile
@@ -121,6 +138,7 @@ export function CodeEditor({ views, activeFile, onEdit, onRun }: Props) {
         callbacksRef.current.onEdit(slot.sceneId, slot.field, created.getValue().slice(slot.start, slot.end))
       })
       modelsRef.current.set(activeFile, created)
+      revealRef.current.add(activeFile)
       model = created
     }
 
@@ -131,6 +149,11 @@ export function CodeEditor({ views, activeFile, onEdit, onRun }: Props) {
       editor.focus()
     }
     slotsRef.current = view.valueSlots
+    // A newly added scene function lands at the bottom of the file; scroll it into view (no cursor
+    // move, no animation) so the player sees what changed.
+    if (revealRef.current.delete(activeFile) && view.valueSlots.length) {
+      editor.revealLineInCenterIfOutsideViewport(model.getPositionAt(view.valueSlots[0].start).lineNumber)
+    }
     decorationsRef.current?.set(
       view.valueSlots.map((s) => {
         const from = model.getPositionAt(s.start)
