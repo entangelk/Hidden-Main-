@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { buildFileTree } from './fileTree'
 
 describe('buildFileTree', () => {
@@ -38,6 +38,19 @@ describe('buildFileTree', () => {
   it('sorts names case-insensitively (code-unit order would put B.py first)', () => {
     const tree = buildFileTree(['B.py', 'c.py', 'a.py'])
     expect(tree.map((n) => n.name)).toEqual(['a.py', 'B.py', 'c.py'])
+  })
+
+  // Under an English default locale, dropping the 'en' argument would not change the order, so
+  // the spy below pins the argument itself; the order check catches a different pinned locale.
+  it('passes the pinned English locale to localeCompare', () => {
+    const spy = vi.spyOn(String.prototype, 'localeCompare')
+    try {
+      buildFileTree(['b.py', 'a.py'])
+      expect(spy).toHaveBeenCalled()
+      for (const call of spy.mock.calls) expect(call[1]).toBe('en')
+    } finally {
+      spy.mockRestore()
+    }
   })
 
   it('sorts with English collation (Lithuanian would put y.py before j.py)', () => {

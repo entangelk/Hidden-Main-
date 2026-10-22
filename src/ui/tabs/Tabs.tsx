@@ -10,7 +10,7 @@ type Props = {
 // role does not allow inside a tablist.
 export function Tabs({ openFiles, activeFile, dirtyFiles, onSelect, onClose }: Props) {
   return (
-    <div className="tabs" aria-label="Open editors">
+    <div className="tabs" role="group" aria-label="Open editors">
       {openFiles.map((path) => (
         <div
           key={path}
