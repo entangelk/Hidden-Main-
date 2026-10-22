@@ -1,6 +1,6 @@
 # 아키텍처 개요
 
-> 상태: **v0.1 초안** · 2026-10-22 · 상위 기준: [`../SOT.md`](../SOT.md)
+> 상태: **v0.2 초안** · 2026-10-22 · 상위 기준: [`../SOT.md`](../SOT.md)
 > 이 문서는 SoT의 요구사항을 어떤 구조로 구현할지 정한다. SoT와 충돌하면 SoT가 우선한다.
 > Owner 결정(DB-01~04, 모두 B)을 반영한 부분은 해당 브리프 ID로 표시한다.
 
@@ -41,9 +41,9 @@ ideation §6.1의 6개 모듈을 위 경계에 배치한 결과다.
 | 모듈 (ideation) | 위치 | 책임 | 하지 않는 것 |
 | --- | --- | --- | --- |
 | Story Engine | `engine/` | 선택 적용, 상태 전이, 스테이지 해금, 엔딩 판정, 로그 이벤트 생성 | 화면 렌더링, 저장 |
-| Input Parser | `engine/` | 현재 사건 함수 범위에서 지정 변수의 리터럴 추출, 타입·허용값 검증 | 분기 결과 결정 |
+| Input Parser | `engine/` | 현재 사건의 편집 값(원문 리터럴) 해석, 타입·허용값 검증 | 파일 텍스트 탐색, 분기 결과 결정 |
 | Workspace Manager | `engine/` (파일 목록·내용 계산) + `ui/` (열린 탭) | 해금 파일 목록과 각 파일의 표시 내용 계산 | 상태 소유 (상태에서 파생만 함) |
-| Editor Controller | `ui/editor/` | Monaco 연결, `Ctrl/Cmd+Enter`, 지정 값 영역 외 편집 차단(DB-02), 편집 값 전달 | 값 해석 |
+| Editor Controller | `ui/editor/` | Monaco 연결, `Ctrl/Cmd+Enter`, 지정 값 영역 외 편집 차단(DB-02), 값 영역의 텍스트를 `PlayerEdits`로 전달 | 값 해석 |
 | Terminal Renderer | `ui/terminal/` | Engine이 만든 로그 이벤트를 텍스트로 표시 | 로그 내용 결정 |
 | Save Manager | `persistence/` | 저장 스냅샷 직렬화·복원, 버전 검사 | 게임 규칙 |
 
@@ -52,16 +52,18 @@ ideation §6.1의 6개 모듈을 위 경계에 배치한 결과다.
 ## 3. 실행 흐름 (`Ctrl+Enter`)
 
 ```text
-1. EditorPane: 현재 파일의 편집 내용 + 커서가 속한/현재 활성 사건 ID를 App에 전달
-2. Engine.parse(scene, text)       → 성공: ChoiceInput / 실패: ParseError[]
-3. 실패 시: Terminal에 오류 출력, 상태 변경 없음, 저장 없음 (AC-07)
+1. App: 실행 대상 = derive 결과의 currentSceneId (해당 스테이지 파일의 마지막 함수)
+2. Engine.parse(scene, playerEdits[scene.id]) → 성공: Choice / 실패: ParseError[]
+3. 실패 시: Terminal에 오류 출력, Progress·Explorer·파일 내용 변경 없음 (AC-07)
 4. Engine.apply(scenario, progress, choice) → 새 Progress
 5. Engine.derive(scenario, 새 Progress)     → 해금 파일, 파일 내용, 로그, 엔딩
 6. UI 갱신 (Explorer에 새 파일, Terminal 로그)
-7. Persistence.save(새 Progress + 편집 상태)
+7. Persistence.save(SaveSnapshot)
 ```
 
-- 3단계의 "상태 변경 없음"이 AC-07의 핵심 보증이다. 파싱·검증이 끝나기 전에는 어떤 상태도 쓰지 않는다.
+- 3단계의 "상태 변경 없음"이 AC-07의 핵심 보증이다. 파싱·검증이 끝나기 전에는 어떤 상태도 쓰지 않는다. 바뀌는 것은 Terminal 오류 출력뿐이다.
+- 실행 대상은 커서 위치나 활성 탭과 무관하게 항상 현재 사건 하나다(SoT §3.3). 해결된 함수는 다시 실행할 수 없다. Terminal의 실행 줄(예: `$ python incidents/security_audit.py`)이 대상 파일을 알려준다. 활성 탭과 무관하게 실행한다는 점은 작업 가정이다(SoT §8).
+- 엔딩 도달 후(`currentSceneId = null`) 실행하면 Terminal에 한 줄 안내만 하고 상태는 바뀌지 않는다.
 - 플레이어 코드는 어떤 경로로도 실행·`eval`되지 않는다 (R-08).
 
 ---
@@ -95,13 +97,12 @@ ideation §4.4와 §9("기본 코드, 사용자 수정, 스토리 변경 분리"
 
 ## 6. Input Parser 규칙 (MVP)
 
-- 탐색 범위: 현재 사건의 `functionName` 함수 본문(다음 `def`/`class` 또는 들여쓰기 종료 전까지).
-- 인식 형태: 한 줄의 `<필드명> = <리터럴>` (앞뒤 공백·줄 끝 주석 허용).
-- 리터럴 문법: 정수, 실수, `True`/`False`, 큰따옴표·작은따옴표 문자열. 그 외(식, 함수 호출, 변수 참조)는 오류.
+- 입력: 현재 사건의 `PlayerEdits` 항목(필드명 → 원문 리터럴). 편집하지 않은 필드는 템플릿 기본값의 원문. 렌더된 파일 텍스트를 다시 파싱하지 않는다(DB-02(B)로 편집이 값 영역에 한정되므로 불필요).
+- 리터럴 문법: 정수, 실수, `True`/`False`, 큰따옴표·작은따옴표 문자열(앞뒤 공백 허용). 그 외(식, 함수 호출, 변수 참조, 빈 값)는 오류.
 - 검증: 시나리오의 `EditableField` 정의(타입, 허용값 목록 또는 범위)와 대조.
-- 오류 종류: 필드 누락, 중복 정의, 리터럴 아님, 타입 불일치, 허용 범위 밖. 각 오류는 Terminal에 Python 스타일 메시지로 출력한다.
-
-DB-02(B)로 편집이 값 영역에 한정되므로 누락·중복은 구조상 발생하지 않는다. 그래도 parser는 방어적으로 이를 오류로 반환하며, 실사용 경로의 검증은 리터럴·타입·범위다.
+- 오류 종류: 리터럴 아님(`not_literal`), 타입 불일치(`type_mismatch`), 허용 범위 밖(`out_of_range`). 각 오류는 Terminal에 Python 스타일 메시지로 출력한다. 타입 정의는 [데이터 계약 §4](01_data_contracts.md#4-입력-계약-parser).
+- 필드 누락·중복은 구조상 발생하지 않으므로 다루지 않는다.
+- 값 영역의 위치 추적(어느 텍스트 구간이 어떤 필드인지)은 Editor Controller의 책임이다. Parser는 텍스트 위치를 모른다.
 
 ---
 

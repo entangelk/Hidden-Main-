@@ -12,6 +12,7 @@ P02의 하드코딩 루프를 시나리오 데이터로 구동되는 엔진으�
 - [DB-01](../decision_briefs/01_mvp_dynamic_content_scope.md) 해결됨: 새로 추가되는 사건의 주석만 플래그에 따라 변형
 - [DB-03](../decision_briefs/03_scene_reveal_in_file.md) 해결됨: 사건 해결 시 다음 함수를 파일 아래쪽에 추가
 - [DB-04](../decision_briefs/04_scenario_data_format.md) 해결됨: TypeScript 객체
+- Owner 검토: "진행 상태는 `choices` 기록만 저장하고 나머지는 재생으로 파생" 설계([아키텍처 §4](../architecture/00_overview.md#4-상태-모델-요약)). 아직 명시적으로 확인받지 않았으므로 P03 착수 전에 확인한다.
 
 ## 범위
 
@@ -21,14 +22,16 @@ P02의 하드코딩 루프를 시나리오 데이터로 구동되는 엔진으�
 - 파일 표시 내용 `render` (템플릿 사건 블록 순차 추가 + 새 블록의 플래그별 주석 선택 + 플레이어 편집 값)
 - 함수 단위 진행: 한 파일 안 여러 사건 순차 진행, 해결된 함수의 값 고정 표시
 - 템플릿 안 사건 블록·주석 변형 블록의 표식 문법 결정
-- Persistence 어댑터: `SaveSnapshot` 저장·복원, 버전 불일치·손상·localStorage 불가 처리 ([데이터 계약 §6](../architecture/01_data_contracts.md#6-저장-계약))
+- 함수 추가 시 알림 방식 결정: Terminal 한 줄, 커서 이동 여부 (DB-03 후속)
+- 시나리오 파일이 순수 데이터(함수·클로저 없음)인지 확인하는 방법 결정: 테스트 또는 lint (DB-04 후속)
+- Persistence 어댑터: `SaveSnapshot`(진행·편집 값·열린 탭) 저장·복원, 버전 불일치·손상·localStorage 불가 처리 ([데이터 계약 §9](../architecture/01_data_contracts.md#9-저장-계약))
 - 2스테이지·엔딩 2개짜리 테스트용 미니 시나리오 (P04 본 시나리오와 별개, 테스트 fixture)
 
 ## 완료 기준
 
-- 엔진 단위 테스트: 전이 선택, 플래그 누적, 해금 조건, 엔딩 도달, 잘못된 입력 시 `Progress` 불변, 재생 결정성(같은 `choices` → 같은 결과)
-- 저장 테스트: 정상 복원, 손상 JSON, `schemaVersion` 불일치, `scenarioVersion` 불일치 시 유효 구간까지 복원
-- 수동: 미니 시나리오 진행 중 새로고침 → 같은 위치·같은 파일·같은 로그로 복원 (AC-08)
+- 엔진 단위 테스트: 전이 선택, 플래그 누적, 스테이지 해금(사건 도달 시 파일 등장), 엔딩 도달, 잘못된 입력 시 `Progress` 불변, 재생 결정성(같은 `choices` → 같은 결과)
+- 저장 테스트: 정상 복원, 손상 JSON, `schemaVersion` 불일치, `scenarioVersion` 불일치 시 유효 구간까지 복원·편집 값 폐기, 해금되지 않은 탭 경로 제거
+- 수동: 미니 시나리오 진행 중 새로고침 → 같은 진행 위치·같은 열린 탭과 활성 파일·같은 로그로 복원 (AC-08)
 
 ## 병행 가능 작업 / 제외
 

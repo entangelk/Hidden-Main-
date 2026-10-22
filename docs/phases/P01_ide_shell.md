@@ -13,7 +13,7 @@
 ## 범위
 
 - Vite + React + TypeScript 프로젝트 초기화, Vitest 설정
-- [아키텍처 §7](../architecture/00_overview.md#7-디렉터리-구조-예정) 디렉터리 골격 (`engine/`, `scenario/`, `persistence/`, `ui/`, `app/`)
+- [아키텍처 §7](../architecture/00_overview.md#7-디렉터리-구조-예정) 디렉터리 구조를 따른다. git은 빈 폴더를 기록하지 않으므로 폴더는 첫 파일이 생길 때 만든다: P01에서 `app/`, `ui/`(2단계), `ui/editor/`(3단계); `engine/`·`scenario/`·`persistence/`는 P02·P03에서
 - Monaco Editor 연결: Python 문법 강조, 줄 번호, 함수 접기
 - VS Code 계열 다크 테마
 - Explorer: 하드코딩된 파일 목록(폴더 포함) 트리 표시, 클릭으로 열기
@@ -26,7 +26,7 @@
 
 - `npm run build` 성공
 - 수동 확인: 파일 2개 이상 열기·편집·탭 전환·접기, 단축키로 Terminal 출력
-- Vitest가 실행되고 샘플 테스트 1개 통과 (P02부터 실제 테스트가 붙을 자리 확보)
+- `npm test` 종료 코드 0: 2단계의 Explorer 트리 변환 함수 테스트가 첫 테스트
 
 ## 병행 가능 작업 / 제외
 

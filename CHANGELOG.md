@@ -11,3 +11,4 @@
 - `docs/phases/`: 구현 순서 P01~P05
 - `docs/decision_briefs/`: ideation 내부 모순·미정 사항 4건을 분리. Owner가 모두 권장안 B로 결정 — 지정 값만 편집, 사건 함수 순차 추가, 새 사건 주석만 선택에 따라 변형(기존 파일 변경·숨겨진 파일은 P1), TS 객체 시나리오
 - P01 시작: Vite + React + TypeScript + Vitest + oxlint 골격
+- 독립 검증(조건부 합격) 반영: 실행 대상을 현재 사건으로 고정, 저장에 열린 탭 포함, parser 입력을 필드별 원문 리터럴로 확정, 데이터 계약 타입 정의 보강(SoT v0.3, 데이터 계약 v0.2)

@@ -1,6 +1,6 @@
 # Source of Truth — Incident Workspace (가칭)
 
-> 현재 버전: **v0.2** · 최종 수정: 2026-10-22
+> 현재 버전: **v0.3** · 최종 수정: 2026-10-22
 > 이 문서는 제품 요구사항의 단일 기준(SoT)이다. 원천 기획은 [`plan/ideation.md`](plan/ideation.md)이며, 이 문서는 그 기획에서 **확정된 것**, **미결인 것**, **문서 간 우선순위**를 정리한다.
 
 ---
@@ -111,7 +111,8 @@ VS Code를 연상시키는 다크 테마. MVP에서는 게임 진행에 필요�
 
 ### 5.2 P1 — 확장 (MVP 제외)
 
-조건식 수정 분기, 다중 변수 조합 선택, 복수 챕터·폴더 생성, 사용자 선택 이력 UI, 되돌리기, 추가 시나리오 로딩, 히든 엔딩.
+조건식 수정 분기, 다중 변수 조합 선택, 복수 챕터·폴더 생성, 사용자 선택 이력, 스토리 되돌리기, 추가 시나리오 로딩.
+히든 엔딩은 ideation §4.3에서 "후속 버전으로 분리"로만 적혀 있어 P1로 분류했다 (작업 가정).
 숨겨진 파일·함수, 진행에 따른 기존 파일 내용 변경도 P1이다 ([DB-01](decision_briefs/01_mvp_dynamic_content_scope.md)).
 
 ### 5.3 P2 — 장기 (MVP 제외)
@@ -167,6 +168,8 @@ React + TypeScript, Vite, Monaco Editor, CSS, localStorage 저장, 정적 웹 �
 
 - 실행 단축키는 Windows/Linux `Ctrl+Enter`, macOS `Cmd+Enter`를 함께 지원한다(Monaco `CtrlCmd`). ideation에 명시는 없으나 R-07에 맞춘 가정이다.
 - 배포 호스트(정적 호스팅 서비스 선택)는 P05에서 정한다.
+- `Ctrl/Cmd+Enter`는 커서 위치·활성 탭과 무관하게 현재 사건(§3.3의 마지막 함수)을 실행한다. Terminal의 실행 줄이 대상 파일을 보여준다.
+- 새로고침 후에는 진행 상태와 함께 열린 탭·활성 파일도 복원한다(AC-08).
 
 ---
 
@@ -176,3 +179,4 @@ React + TypeScript, Vite, Monaco Editor, CSS, localStorage 저장, 정적 웹 �
 | --- | --- | --- | --- |
 | v0.1 | 2026-10-22 | `plan/ideation.md` v0.1에서 초기 SoT 작성. 우선순위 트리 정의, 미결 사항 DB-01~04 분리 | [작업 로그](daily_logs/2026-10-22/work_log.md) |
 | v0.2 | 2026-10-22 | DB-01~04 모두 B로 해결: 편집 모델(§3.2), 사건 노출(§3.3), 선택 영향 범위(§3.4), 시나리오 형식(§7) 확정 | [작업 로그](daily_logs/2026-10-22/work_log.md) |
+| v0.3 | 2026-10-22 | 독립 검증 반영: P1 목록 표현을 ideation에 맞춤, 히든 엔딩 P1 분류를 가정으로 표시, 실행 대상·탭 복원 가정 추가(§8) | [검증 기록](verifications/2026-10-22/initial_docs_and_p01_scaffold.md) |
