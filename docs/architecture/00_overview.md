@@ -1,6 +1,6 @@
 # 아키텍처 개요
 
-> 상태: **v0.4** · 2026-10-22 · 상위 기준: [`../SOT.md`](../SOT.md)
+> 상태: **v0.5** · 2026-10-22 · 상위 기준: [`../SOT.md`](../SOT.md)
 > 이 문서는 SoT의 요구사항을 어떤 구조로 구현할지 정한다. SoT와 충돌하면 SoT가 우선한다.
 > Owner 결정(DB-01~04, 모두 B)을 반영한 부분은 해당 브리프 ID로 표시한다.
 
@@ -52,7 +52,7 @@ ideation §6.1의 6개 모듈을 위 경계에 배치한 결과다.
 ## 3. 실행 흐름 (`Ctrl+Enter`)
 
 ```text
-1. App: 실행 대상 = derive 결과의 currentSceneId (해당 스테이지 파일의 마지막 함수)
+1. App(`runScene`, 순수 함수): 실행 대상 = derive 결과의 currentSceneId (해당 스테이지 파일의 마지막 함수)
    - null(엔딩 도달)이면 → Terminal 안내 한 줄, 종료
    - 활성 탭이 그 사건의 스테이지 파일이 아니면 → Terminal에 실행할 파일 안내 한 줄, 종료 (SoT §3.5)
 2. App: 입력 리터럴 = 각 필드에 대해 playerEdits[scene.id][field] ?? 값 슬롯의 defaultLiteral
@@ -60,7 +60,7 @@ ideation §6.1의 6개 모듈을 위 경계에 배치한 결과다.
 3. 실패 시: Terminal에 오류 출력, Progress·Explorer·파일 내용 변경 없음 (AC-07)
 4. Engine.apply(scenario, progress, choice) → 새 Progress
 5. Engine.derive(scenario, 새 Progress)     → 해금 파일, 파일 내용, 로그, 엔딩
-6. UI 갱신 (Explorer에 새 파일, Terminal 로그)
+6. UI 갱신 (Explorer에 새 파일, Terminal 로그). Terminal = derive의 로그 + 안내·오류 같은 일시 출력(저장하지 않으므로 새로고침하면 사라진다)
 7. Persistence.save(SaveSnapshot)
 ```
 
@@ -94,6 +94,24 @@ ideation §4.4와 §9("기본 코드, 사용자 수정, 스토리 변경 분리"
 화면에 보이는 텍스트 = `applyEdits(render(템플릿, 오버레이), 플레이어 편집)`. `render`는 진행 상태만 반영한 `FileView`를, `applyEdits`는 거기에 편집 값을 끼운 결과를 만든다(§6.2).
 
 - 오버레이 범위(MVP): 진행에 따라 사건 함수를 파일 아래쪽에 추가(DB-03), 새로 추가되는 함수의 주석을 플래그에 따라 선택(DB-01). 이미 보인 텍스트는 바뀌지 않는다.
+- 사건 함수 공개: 템플릿에는 그 스테이지의 사건 함수가 모두 들어 있고, 아직 도달하지 않은 사건의 함수 블록(바로 위 빈 줄 포함)을 `render`가 지운다. 모듈 머리(import, class 줄)와 꼬리(`if __name__ ...`)는 항상 보인다. 템플릿 안 사건 함수 순서는 `Stage.sceneIds` 순서와 같아야 한다(P04 검증).
+- 함수가 추가될 때(같은 파일의 다음 사건에 도달)는 Terminal에 `[workspace] <파일>: <함수>() 추가됨` 한 줄을 남긴다. 커서와 스크롤은 움직이지 않는다(R-05: 화면 전환 연출 없음). 새 스테이지 파일이 생길 때는 `[workspace] <파일> 생성됨`.
+
+### 5.1 주석 변형 지시문
+
+사건 함수 안에서만 쓰는 템플릿 전용 주석 줄이다. 화면에는 나오지 않는다.
+
+```python
+        # @if <flag> <op> <literal>
+        # (조건이 참일 때 보일 주석)
+        # @else
+        # (아닐 때 보일 주석)
+        # @end
+```
+
+- 조건은 플래그 하나에 대한 비교(`==`·`!=`·`>=`·`<=`, `Clause`와 같은 규칙)이고, 값은 리터럴 문법(§6)을 따른다. `@else`는 생략할 수 있다. 중첩은 허용하지 않는다.
+- 평가 시점은 그 사건이 **현재 사건이 된 순간의 플래그**다. 나중에 플래그가 바뀌어도 이미 보인 주석은 바뀌지 않는다(DB-01).
+- 잘못된 지시문(조건 형식 오류, 짝 없는 `@else`/`@end`, 닫히지 않은 `@if`, 중첩)은 `render`가 예외를 던진다. 시나리오 작성 오류이므로 P04 검증 테스트가 모든 경로를 렌더해 잡는다.
 - 플레이어 편집은 지정 변수의 값 리터럴만이다(DB-02). 화면 텍스트는 매번 `render` → `applyEdits`로 재구성하므로 계층 사이 충돌이 구조적으로 없다.
 
 ---
@@ -132,17 +150,18 @@ ideation §4.4와 §9("기본 코드, 사용자 수정, 스토리 변경 분리"
 
 ---
 
-## 7. 디렉터리 구조 (예정)
+## 7. 디렉터리 구조
 
 ```text
 src/
-  engine/          # 순수 TS: types, parser, reducer(apply), derive(selectors)
+  engine/          # 순수 TS: types, parser, slots, condition, render, derive(apply·derive·validPrefix)
   scenario/
-    incident-0214/ # 첫 시나리오 데이터 + .py 템플릿
-  persistence/     # localStorage 어댑터, 저장 스키마 버전
+    mini/          # P03 테스트·개발용 소형 시나리오 (2스테이지·엔딩 2개)
+    incident-0214/ # 첫 시나리오 데이터 + .py 템플릿 (P04)
+  persistence/     # localStorage 어댑터(save.ts): 저장 형식, 복원 규칙, 디바운스 저장
   ui/
     explorer/  editor/  tabs/  terminal/  statusbar/
-  app/             # 조립, 상태 보관, 자동 저장 트리거
+  app/             # 조립(App.tsx), 실행 한 번의 순수 함수(run.ts), Terminal 문구
 ```
 
 - 시나리오 구조는 TypeScript 객체로 작성한다(DB-04). `.py` 템플릿은 TypeScript 문자열에 넣지 않고 별도 파일로 두어 Vite `?raw` import로 읽는다(들여쓰기 보존, 편집 편의).

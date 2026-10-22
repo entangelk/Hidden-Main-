@@ -201,6 +201,20 @@
 - 검증: `npm test` 54개, build·lint 통과, 브라우저 전체 흐름·연속 실행·빈 값 표시 재확인.
 - P02 Complete.
 
+### 21. P03 데이터 기반 스토리 엔진 + 저장 구현
+
+- 파일: `src/engine/{types,parser,condition,render,derive}.ts`(+tests), `src/scenario/mini/*`, `src/scenario/scenarioData.test.ts`, `src/persistence/save.ts`(+test), `src/app/run.ts`(+test), `src/app/App.tsx`, `src/ui/terminal/Terminal.tsx`, `src/app/App.css`. P02 프로토타입(`src/app/prototype*`, `runPrototype*`) 삭제.
+- 주요 내용:
+  - `derive`는 `choices`를 처음부터 재생해 현재 사건·플래그·엔딩·로그·파일 표시를 계산. `apply`는 재생이 통과할 때만 선택을 붙이고 아니면 같은 객체를 돌려줌(AC-07). `validPrefix`는 다른 버전 저장의 재생 가능한 앞부분.
+  - `render`: 도달하지 않은 사건 함수 블록을 지우고(DB-03), 도달한 사건의 주석 변형 지시문을 도달 시점 플래그로 해석(DB-01), 해결된 값 고정, 현재 사건 슬롯만 노출.
+  - 저장: 진행은 실행 성공 즉시, 편집·탭은 400ms 디바운스, `pagehide`에서 ref의 최신 값으로 즉시 저장. 복원은 손상·스키마 불일치 → 안내 후 새 게임, 시나리오 버전 불일치 → 재생 가능한 앞부분 + 편집 값 폐기, 보이지 않는 파일 탭 제거, 저장소 접근 불가 → 저장 없이 진행.
+  - Terminal 줄에 수준(info·warn·error) 색 표시, 새 출력이 보이도록 자동 스크롤.
+- 결정(위임 범위): 주석 변형은 `# @if <flag> <op> <literal>` / `# @else` / `# @end` 지시문(중첩 없음). 함수 추가 알림은 Terminal 한 줄, 커서 이동 없음. 시나리오 순수성은 테스트(함수 탐색 + JSON 왕복)로 확인. 탭이 모두 사라지면 시작 파일 하나를 연 화면으로.
+- 계약 보정: 데이터 계약의 `Scenario`에 사건 목록 `scenes`가 빠져 있었음(스테이지는 id만 참조) → 추가. `DerivedState`의 `unlockedFiles` + `fileView` 함수를 `files: Record<경로, FileView>` 하나로(같은 사실의 중복 제거). `SaveSnapshot`·`WorkspaceView` 타입은 `persistence/`에 선언. 데이터 계약 v0.5, 아키텍처 v0.5(§5 공개 규칙·§5.1 지시문·§7 디렉터리).
+- 발견·수정한 문제: 값을 입력하고 바로 새로고침하면 마지막 입력이 저장되지 않음(디바운스 예약을 거는 effect가 다음 페인트 뒤에 실행되기 때문, 브라우저 자동 테스트로 재현) → `pagehide`에서 ref의 최신 값으로 저장하도록 수정, 재현 시나리오 통과.
+- 검증: `npm test` 83개(엔진 재생·전이·플래그·공개·변형·엔딩·apply 불변·결정성·validPrefix, 저장 복원·손상·버전 불일치·탭 정리·디바운스·flush, 실행 경로, 시나리오 순수성), build·lint 통과. Playwright: 시작 시 `contain` 함수 숨김 → 실행 후 추가·알림·주석 변형, 편집 후 새로고침 복원(탭·활성 파일·편집 값·로그), 다른 탭 실행 안내, 새 파일 생성과 변형 주석, 입력 직후 새로고침에도 편집 유지, 엔딩 로그와 이후 안내, 엔딩 후 새로고침, 손상 저장 → 안내 후 새 게임, 콘솔 오류·외부 요청 없음.
+- 독립 검증을 서브에이전트로 요청.
+
 ## 발견한 문제
 
 | 문제 | 원인 | 처리 | 결과 |
@@ -236,4 +250,5 @@
 
 ## 다음 단계
 
-1. P03 데이터 기반 스토리 엔진 + 저장
+1. P03 독립 검증 → 지적 반영 → 통과 시 P03 Complete
+2. P04 시나리오

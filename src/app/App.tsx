@@ -1,49 +1,102 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { derive } from '../engine/derive'
 import { applyEdits } from '../engine/slots'
-import type { Choice, FileView, PlayerEdits, SceneId } from '../engine/types'
+import type { FileView, LogLine, PlayerEdits, Progress, SceneId } from '../engine/types'
+import { createSaver, restore, saveKey, snapshot, type KeyValueStore, type WorkspaceView } from '../persistence/save'
+import { miniScenario } from '../scenario/mini'
 import { CodeEditor } from '../ui/editor/CodeEditor'
 import { Explorer } from '../ui/explorer/Explorer'
 import { StatusBar } from '../ui/statusbar/StatusBar'
 import { Tabs } from '../ui/tabs/Tabs'
 import { Terminal } from '../ui/terminal/Terminal'
-import { derivePrototype } from './prototype'
-import { runPrototype } from './runPrototype'
+import { runScene } from './run'
 import './App.css'
 
+// The mini scenario drives the app until the real one lands (P04).
+const scenario = miniScenario
+const startFile = scenario.stages.find((st) => st.sceneIds.includes(scenario.startSceneId))!.filePath
+const freshWorkspace: WorkspaceView = { openFiles: [startFile], activeFile: startFile }
+
+function browserStorage(): KeyValueStore | null {
+  try {
+    return window.localStorage
+  } catch {
+    return null // storage blocked: play without saving
+  }
+}
+
+/** Transient Terminal output (notices, errors) shown after the first `at` lines of the log. */
+type TransientLine = { at: number; line: LogLine }
+
 export default function App() {
-  const [choices, setChoices] = useState<Choice[]>([])
-  // Mirrors `choices` synchronously, like editsRef below: two runs fired before a re-render must
-  // not both solve the same scene.
-  const choicesRef = useRef<Choice[]>([])
-  const [edits, setEdits] = useState<PlayerEdits>({})
-  // Same value as `edits`, updated synchronously: a run fired right after a keystroke (before
-  // React re-renders) must still see that keystroke.
-  const editsRef = useRef<PlayerEdits>({})
+  const [storage] = useState(browserStorage)
+  const [initial] = useState(() => restore(storage, scenario, freshWorkspace))
+
+  const [progress, setProgress] = useState<Progress>(initial.progress)
+  const [edits, setEdits] = useState<PlayerEdits>(initial.playerEdits)
+  // Mirrors of progress and edits, updated synchronously: a run fired right after a keystroke, or
+  // a second run fired before React re-renders, must see the latest values.
+  const progressRef = useRef(initial.progress)
+  const editsRef = useRef(initial.playerEdits)
   const updateEdits = useCallback((change: (prev: PlayerEdits) => PlayerEdits) => {
     editsRef.current = change(editsRef.current)
     setEdits(editsRef.current)
   }, [])
-  const [openFiles, setOpenFiles] = useState<string[]>(['main.py'])
-  const [activeFile, setActiveFile] = useState<string | null>('main.py')
-  const [terminalLines, setTerminalLines] = useState<string[]>([])
+  const [openFiles, setOpenFiles] = useState<string[]>(initial.workspace.openFiles)
+  const [activeFile, setActiveFile] = useState<string | null>(initial.workspace.activeFile)
+  const [transient, setTransient] = useState<TransientLine[]>(() =>
+    initial.notice ? [{ at: 0, line: { level: 'warn', text: initial.notice } }] : [],
+  )
 
-  const state = useMemo(() => derivePrototype(choices), [choices])
+  const state = useMemo(() => derive(scenario, progress), [progress])
   const views = useMemo(() => {
     const out: Record<string, FileView> = {}
-    for (const [path, view] of Object.entries(state.views)) out[path] = applyEdits(view, edits)
+    for (const [path, view] of Object.entries(state.files)) out[path] = applyEdits(view, edits)
     return out
   }, [state, edits])
 
   // A file is modified while its current scene holds a value different from the template's.
   const dirtyFiles = useMemo(() => {
     const dirty = new Set<string>()
-    for (const [path, view] of Object.entries(state.views)) {
+    for (const [path, view] of Object.entries(state.files)) {
       if (view.valueSlots.some((s) => (edits[s.sceneId]?.[s.field] ?? s.defaultLiteral) !== s.defaultLiteral)) {
         dirty.add(path)
       }
     }
     return dirty
   }, [state, edits])
+
+  const terminalLines = useMemo(() => {
+    const out: LogLine[] = []
+    state.log.forEach((line, i) => {
+      for (const t of transient) if (t.at === i) out.push(t.line)
+      out.push(line)
+    })
+    for (const t of transient) if (t.at >= state.log.length) out.push(t.line)
+    return out
+  }, [state, transient])
+
+  // Saving (data contract §9): progress right away, edits and tabs debounced, everything on pagehide.
+  const saver = useMemo(() => createSaver(storage, saveKey(scenario.id), 400), [storage])
+  const workspace = useMemo(() => ({ openFiles, activeFile }), [openFiles, activeFile])
+  const latest = useRef({ edits, workspace })
+  useEffect(() => {
+    latest.current = { edits, workspace }
+  })
+  useEffect(() => {
+    saver.saveNow(snapshot(scenario, progress, latest.current.edits, latest.current.workspace, new Date()))
+  }, [saver, progress])
+  useEffect(() => {
+    saver.schedule(snapshot(scenario, progressRef.current, edits, workspace, new Date()))
+  }, [saver, edits, workspace])
+  // On leaving the page, write the newest state from the refs: an edit typed just before a reload
+  // may not have reached the debounced snapshot yet (its effect runs after the next paint).
+  useEffect(() => {
+    const onPageHide = () =>
+      saver.saveNow(snapshot(scenario, progressRef.current, editsRef.current, latest.current.workspace, new Date()))
+    window.addEventListener('pagehide', onPageHide)
+    return () => window.removeEventListener('pagehide', onPageHide)
+  }, [saver])
 
   const onEdit = useCallback(
     (sceneId: SceneId, field: string, literal: string) =>
@@ -52,14 +105,19 @@ export default function App() {
   )
 
   const run = useCallback(() => {
-    const { lines, choice } = runPrototype(choicesRef.current, editsRef.current, activeFile)
-    setTerminalLines((prev) => [...prev, ...lines])
-    if (!choice) return
-    choicesRef.current = [...choicesRef.current, choice]
-    setChoices(choicesRef.current)
+    const before = progressRef.current
+    const result = runScene(scenario, before, editsRef.current, activeFile)
+    if (result.lines.length) {
+      const at = derive(scenario, before).log.length
+      setTransient((prev) => [...prev, ...result.lines.map((line) => ({ at, line }))])
+    }
+    if (!result.progress) return
+    const solved = result.progress.choices.at(-1)!.sceneId
+    progressRef.current = result.progress
+    setProgress(result.progress)
     updateEdits((prev) => {
       const rest = { ...prev }
-      delete rest[choice.sceneId]
+      delete rest[solved]
       return rest
     })
   }, [activeFile, updateEdits])
@@ -90,7 +148,7 @@ export default function App() {
 
   return (
     <div className="workbench">
-      <Explorer paths={state.unlockedFiles} activeFile={activeFile} onOpen={open} />
+      <Explorer paths={Object.keys(state.files)} activeFile={activeFile} onOpen={open} />
       <main className="editor-group">
         <Tabs
           openFiles={openFiles}

@@ -1,8 +1,8 @@
 # 데이터 계약
 
-> 상태: **v0.4** · 2026-10-22 · 상위 기준: [`../SOT.md`](../SOT.md), [`00_overview.md`](00_overview.md)
+> 상태: **v0.5** · 2026-10-22 · 상위 기준: [`../SOT.md`](../SOT.md), [`00_overview.md`](00_overview.md)
 > 작성 규칙: [`../guides/data-contracts.md`](../guides/data-contracts.md), [`../guides/api-and-persistence-schemas.md`](../guides/api-and-persistence-schemas.md)
-> 아래 타입은 계약의 모양을 보이기 위한 초안이다. 실제 정본은 구현 시 `src/engine/types.ts` 한 곳에 둔다(`SaveSnapshot`·`WorkspaceView`는 각각 `persistence/`·`ui/` 소유).
+> 정본 코드: 엔진 계약은 `src/engine/types.ts`, `SaveSnapshot`·`WorkspaceView`·`KeyValueStore`는 `src/persistence/save.ts`. 이 문서와 코드가 다르면 이 문서를 고친다.
 
 ---
 
@@ -16,7 +16,7 @@
 | `Progress` | Story Engine | `apply()`만 | 플레이 전체 | 함 |
 | `DerivedState` | Story Engine | 없음 (계산 결과) | 계산 시점 | 안 함 |
 | `PlayerEdits` | EditorPane (플레이어) | 편집 이벤트만 | 플레이 전체 | 함 |
-| `WorkspaceView` (열린 탭, 활성 파일) | UI | UI만 | 플레이 전체 | 함 (새로고침 후 탭 복원, SoT §3.6) |
+| `WorkspaceView` (열린 탭, 활성 파일) | UI (App이 상태로 보관) | UI만 | 플레이 전체 | 함 (새로고침 후 탭 복원, SoT §3.6). 타입은 저장 형식의 일부라 `persistence/`에 선언 |
 | `SaveSnapshot` | Persistence 어댑터 | 어댑터만 | 저장소 | localStorage |
 
 ---
@@ -45,6 +45,7 @@ type Scenario = {
   version: number;            // 시나리오 내용 변경 시 증가 (저장 호환성 판단에 사용)
   initialFiles: StaticFile[]; // main.py, 설정 파일 등 처음부터 보이는 비스테이지 파일
   stages: Stage[];
+  scenes: Scene[];            // 모든 사건을 한 번씩. 스테이지는 sceneIds로 참조만 한다
   endings: Ending[];
   startSceneId: SceneId;
 };
@@ -99,7 +100,7 @@ type Ending = { id: EndingId; log: LogLine[] };  // 엔딩 도달 시 Terminal �
 
 | ideation §6.2 | 이 계약 | 이유 |
 | --- | --- | --- |
-| `Stage.scenes` | `Stage.sceneIds` | 사건 정의는 `Scenario` 안 한 곳(`Scene`)에만 두고, 스테이지는 순서만 참조하도록 이름으로 구분 |
+| `Stage.scenes` | `Stage.sceneIds` + `Scenario.scenes` | 사건 정의는 `Scenario.scenes` 한 곳에만 두고, 스테이지는 순서만 참조하도록 이름으로 구분 |
 | `Stage.initialCode` | `Stage.template` | 처음 화면에 그대로 보이는 코드가 아니라, 사건 블록 단위로 잘려 진행에 따라 조립되는 원본이므로(DB-03) 이름을 바꿈 |
 | `Stage.unlockCondition` | 없음 (파생) | DB-03(B)에서 스테이지 파일은 그 안의 사건이 처음 현재 사건이 될 때 나타난다. 전이 그래프에서 결정되므로 별도 조건을 두면 같은 사실을 두 곳에 쓰게 된다. 조건부로만 나타나는 파일은 P1(DB-01) |
 | `Scene.functionName` | `Scene.functionName` | 이름은 같다. 화면상 함수 이름이자, 템플릿에서 이 사건의 블록과 값 슬롯을 찾는 키로 쓰인다 |
@@ -149,7 +150,7 @@ type Progress = {
 | 사건 진행 기록 | `Progress.choices` (정본) | 다른 모든 진행 상태의 출처 |
 | 현재 함수 | 파생 (`derive`) | 마지막 전이의 `next`로 결정됨 |
 | 스토리 플래그 | 파생 | `choices`를 재생하며 `effects` 누적 |
-| 해금된 파일 목록 | 파생 | 지금까지 현재 사건이 된 적 있는 사건들의 스테이지 파일 |
+| 해금된 파일 목록 | 파생 (`DerivedState.files`의 키) | 지금까지 현재 사건이 된 적 있는 사건들의 스테이지 파일. 별도 목록을 두면 `files`와 같은 사실을 두 번 쓰게 됨 |
 | 엔딩 상태 | 파생 | 마지막 전이가 `ending`이면 종료 |
 | 현재 파일 | `WorkspaceView` (UI 상태) | 게임 규칙이 아니라 화면 상태 |
 | 사용자 코드 수정 내용 | `PlayerEdits` (별도 계약) | 소유자가 플레이어로 다름 |
@@ -164,10 +165,9 @@ type Progress = {
 type DerivedState = {
   currentSceneId: SceneId | null;   // 엔딩 도달 시 null
   flags: Record<string, Value>;
-  unlockedFiles: string[];          // initialFiles + 해금된 Stage.filePath
   ending: EndingId | null;
   log: LogLine[];                   // 전체 Terminal 기록 (재생으로 복원)
-  fileView: (path: string) => FileView; // 템플릿 + 스토리 오버레이 (플레이어 편집 적용 전)
+  files: Record<string, FileView>;  // 보이는 파일 전부(initialFiles + 해금된 스테이지) → 템플릿 + 스토리 오버레이 (플레이어 편집 적용 전)
 };
 
 type FileView = {
@@ -217,7 +217,7 @@ type WorkspaceView = {
 };
 ```
 
-- 복원 시 `unlockedFiles`에 없는 경로는 버린다. `activeFile`이 버려졌으면 남은 첫 탭, 없으면 `null`.
+- 복원 시 보이는 파일(`DerivedState.files`의 키)에 없는 경로는 버린다. `activeFile`이 버려졌으면 남은 첫 탭, 없으면 `null`. 남은 탭이 하나도 없으면 시작 사건의 파일 하나를 연 처음 화면으로 돌아간다.
 
 ---
 
@@ -236,7 +236,7 @@ type SaveSnapshot = {
 ```
 
 - 키: `incident-workspace:save:<scenarioId>` (시나리오별 1슬롯).
-- 저장 시점: 실행 성공 직후, 편집·탭 변경 시(디바운스), 그리고 페이지를 떠날 때(`pagehide`)에는 대기 중인 저장을 즉시 실행한다. 그래서 새로고침 직전의 편집도 복원된다. 실행 실패 시에는 진행 상태를 바꾸지 않으므로 그로 인한 저장도 없다.
+- 저장 시점: 실행 성공 직후, 편집·탭 변경 시(디바운스), 그리고 페이지를 떠날 때(`pagehide`)에는 App이 ref에 동기 기록해 둔 최신 진행·편집 값으로 즉시 저장한다(디바운스 대기분을 쓰지 않는다 — 입력 직후의 새로고침에서는 디바운스 예약 자체가 아직 안 됐을 수 있다). 그래서 새로고침 직전의 편집도 복원된다. 실행 실패 시에는 진행 상태를 바꾸지 않으므로 그로 인한 저장도 없다.
 - 복원 규칙:
   - JSON 파싱 실패 또는 `schemaVersion` 불일치 → 저장을 버리고 새 게임. Terminal에 한 줄 안내.
   - `scenarioVersion` 불일치 → `choices`를 재생해 보고, 재생 중 존재하지 않는 사건·필드·값을 만나면 그 직전까지 유효한 기록만 유지. `playerEdits`는 전부 버린다(현재 사건이 달라졌을 수 있으므로 템플릿 기본값으로 돌아감). `workspace`는 위 §8 규칙으로 정리.

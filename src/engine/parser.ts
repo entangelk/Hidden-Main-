@@ -49,6 +49,23 @@ function check(field: EditableField, lit: Literal): { value: Value } | ParseErro
   }
 }
 
+/** Whether stored values still fit the fields (used when replaying a save made for another version). */
+export function valuesFit(fields: EditableField[], values: Record<string, Value>): boolean {
+  if (Object.keys(values).length !== fields.length) return false
+  return fields.every((field) => {
+    const v = values[field.name]
+    const lit: Literal | null =
+      typeof v === 'boolean'
+        ? { kind: 'bool', value: v }
+        : typeof v === 'string'
+          ? { kind: 'str', value: v }
+          : typeof v === 'number'
+            ? { kind: Number.isInteger(v) ? 'int' : 'float', value: v }
+            : null
+    return lit !== null && typeof check(field, lit) !== 'string'
+  })
+}
+
 /** Validates the raw literal of every field. All errors are reported, not just the first. */
 export function parse(
   sceneId: SceneId,

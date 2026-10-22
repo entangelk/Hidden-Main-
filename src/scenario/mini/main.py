@@ -22,6 +22,19 @@ class IncidentResponder:
 
         return monitor.ignore(alert_id)
 
+    def contain(self):
+        # @if analyzed == True
+        # 접근 기록에서 출발지 10.0.2.14를 찾아냈다. 자산 목록에 없는 주소다.
+        # @else
+        # 출발지를 아직 모른다. 전송은 계속되고 있다.
+        # @end
+        #
+        # 서버를 격리하려면 isolate를 True로 바꾼다.
+
+        isolate = False
+
+        return monitor.contain(isolate)
+
 
 if __name__ == "__main__":
     IncidentResponder().triage_alert()

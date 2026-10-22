@@ -178,3 +178,11 @@
   text-decoration: underline dotted #4fc1ff;
   text-underline-offset: 3px;
 }
+
+.terminal-line.is-warn {
+  color: #cca700;
+}
+
+.terminal-line.is-error {
+  color: #f48771;
+}

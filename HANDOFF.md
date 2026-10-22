@@ -6,14 +6,13 @@
 
 - 제품 기준: [`docs/SOT.md`](docs/SOT.md) v0.5 (우선순위 트리는 SoT §1). 미결 Owner 결정 없음.
 - 아키텍처: [`docs/architecture/`](docs/architecture/)
-- 페이즈: [`docs/phases/00_index.md`](docs/phases/00_index.md) — P01·P02 완료, **다음은 P03 (데이터 기반 스토리 엔진 + 저장)**
+- 페이즈: [`docs/phases/00_index.md`](docs/phases/00_index.md) — P01·P02 완료, **P03 (데이터 기반 스토리 엔진 + 저장) 진행 중 — 독립 검증 대기**
 - 코드 구성:
-  - `src/engine/`: 순수 로직 — `types.ts`(계약 일부), `parser.ts`(`parse`·`readLiteral`·`formatLiteral`), `slots.ts`(`functionBlock`·`findValueSlots`·`shiftSlots`·`applyEdits`).
-  - `src/app/prototype.ts` + `prototype/*.py`: P02용 하드코딩 시나리오(사건 2개, 분기 없음). P03에서 시나리오 데이터·엔진 `apply`/`derive`로 교체.
-  - `src/app/runPrototype.ts`: 실행 한 번의 순수 함수(아키텍처 §3 흐름) — 출력 줄과, 검증 통과 시 추가할 `Choice`를 돌려줌.
-  - `src/app/App.tsx`: 진행(`choices`)·편집 값(`PlayerEdits`) — 둘 다 ref에도 동기 기록 — 와 탭 상태를 들고 `runPrototype` 결과를 반영. Terminal 줄은 이벤트마다 추가만 하는 상태(P03에서 재생 기반으로 바뀜).
-  - `src/ui/editor/CodeEditor.tsx`: 엔진 `FileView`를 표시, `acceptChange`로 값 슬롯 밖 편집을 실행 취소로 되돌림, 엔진 쪽 텍스트가 바뀌면 모델을 다시 씀.
-  - 저장 없음(P03).
+  - `src/engine/`: 순수 로직 — `types.ts`(계약 정본), `parser.ts`(`parse`·`readLiteral`·`formatLiteral`·`valuesFit`), `slots.ts`(함수 블록·값 슬롯·`shiftSlots`·`applyEdits`), `condition.ts`(`holds`), `render.ts`(사건 함수 공개·주석 변형 `# @if`), `derive.ts`(`derive`·`apply`·`validPrefix` — `choices` 재생).
+  - `src/scenario/mini/`: 2스테이지·엔딩 2개 소형 시나리오. 테스트와 앱이 함께 쓴다. P04에서 앱은 `incident-0214`로 바뀌고 mini는 테스트용으로 남는다.
+  - `src/persistence/save.ts`: 저장 형식(`SaveSnapshot`), `restore`(손상·버전 불일치·저장소 차단 처리), 디바운스 저장기. 키 `incident-workspace:save:<시나리오 id>`.
+  - `src/app/run.ts`: 실행 한 번의 순수 함수 `runScene` → 일시 출력 줄 + 새 진행. `src/app/App.tsx`: 진행·편집 값(둘 다 ref 동기 기록)·탭 상태 보관, 저장 연결(진행은 즉시, 편집·탭은 디바운스, `pagehide`는 ref의 최신 값으로 즉시).
+  - Terminal = `derive` 로그(재생으로 복원) + 안내·오류 일시 출력(저장 안 함, 새로고침하면 사라짐).
 - 명령: `npm run dev` / `npm run build` / `npm run lint` / `npm test`
 
 ## 주의 사항
@@ -26,4 +25,5 @@
 
 ## 다음 작업
 
-1. P03 데이터 기반 스토리 엔진 + 저장 ([`docs/phases/P03_story_engine_and_save.md`](docs/phases/P03_story_engine_and_save.md))
+1. P03 독립 검증 → 통과하면 P03 Complete
+2. P04 시나리오 *Incident 02:14* ([`docs/phases/P04_incident_0214_scenario.md`](docs/phases/P04_incident_0214_scenario.md))
