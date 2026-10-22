@@ -104,6 +104,18 @@
 - 주요 내용: 경로 목록 → 폴더 트리 변환을 순수 함수로 분리(폴더 먼저·이름순). Explorer 폴더 접기/펼치기, 파일 클릭으로 탭 열기. 탭 전환·닫기(닫으면 오른쪽 이웃, 없으면 왼쪽). Terminal 패널은 줄 목록 표시만. Status Bar에 활성 파일·UTF-8·Python. 편집기 자리는 3단계 전까지 `<pre>`. 탭 "수정됨(●)" 표시는 편집이 생기는 3단계에서 붙임.
 - 검증: `npm test` 4개 통과(종료 코드 0, 검증 지적 H12 해소) — 중첩 경로가 폴더 하나로 묶이는지(과소 엄격), 루트 파일이 사라지거나 잘못 중첩되지 않는지(과잉 엄격). `npm run build`·`npm run lint` 통과. Playwright로 미리보기 서버에서 파일 열기 → 탭 3개, 활성 탭 닫기 → 이웃 탭 활성, 폴더 접기 → 하위 파일 숨김, 콘솔 오류 없음 확인.
 
+### 13. P01 3단계 — Monaco 연결
+
+- 파일: `src/ui/editor/monaco.ts`, `src/ui/editor/CodeEditor.tsx`, `src/ui/tabs/Tabs.tsx`, `src/app/App.tsx`, `src/app/App.css`, `vite.config.ts`, `package.json`(`monaco-editor` 0.57.0 추가)
+- 주요 내용:
+  - `@monaco-editor/react` 대신 `monaco-editor`를 직접 사용. 래퍼 패키지는 기본이 CDN 로딩이고, 탭마다 모델을 유지하는 데 직접 제어가 더 단순함.
+  - `editor.api` + 필요한 기능(core 명령, 접기, 괄호 짝, 단어 이동) + Python 문법만 import, 편집 워커는 Vite `?worker`로 번들. 외부 요청 없음.
+  - 파일별 Monaco 모델·뷰 상태 유지(탭 전환 시 편집 내용·커서 보존). 원본과 다르면 탭에 ● 표시, 되돌리면 사라짐.
+  - `Ctrl/Cmd+Enter`: 편집기 안에서는 Monaco 명령(줄 삽입 기본 동작 대체), 밖에서는 window 키 처리. P01에서는 `$ python <활성 파일>` 출력만.
+  - codicon 아이콘 폰트가 없어 접기 아이콘이 네모로 보이는 문제 발견 → `vite.config.ts` alias로 codicon CSS 연결.
+- 검증: build·lint·test(4개) 통과. Playwright(미리보기 서버): 문법 강조 토큰, 줄 번호, 접기 아이콘 표시와 클릭 시 접힘(보이는 줄 10→9), 입력 시 ● 표시·실행 취소 시 해제, 탭 전환 후 편집 보존, 편집기 안/밖 `Ctrl+Enter` 모두 Terminal 출력(편집기 안에서 줄이 추가되지 않음), 콘솔 오류·경고 없음, 외부 네트워크 요청 0건.
+- 알려진 사항: 메인 청크 약 3MB(대부분 Monaco)로 Vite 크기 경고. P05에서 분할 검토.
+
 ## 발견한 문제
 
 | 문제 | 원인 | 처리 | 결과 |
@@ -136,4 +148,5 @@
 
 ## 다음 단계
 
-1. P01 3단계: Monaco 연결·다크 테마·`Ctrl/Cmd+Enter`·탭 수정 표시
+1. P01 3단계 독립 검증 → 지적 반영 → 통과 시 P01 Complete
+2. P02 착수

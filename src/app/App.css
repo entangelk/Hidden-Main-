@@ -88,17 +88,29 @@
 }
 
 .tab:hover .tab-close,
-.tab.is-active .tab-close {
+.tab.is-active .tab-close,
+.tab.is-dirty .tab-close {
   visibility: visible;
 }
 
-.editor-placeholder {
-  margin: 0;
-  padding: 8px 16px;
-  overflow: auto;
-  font-family: Consolas, 'Courier New', monospace;
-  font-size: 14px;
-  line-height: 19px;
+/* Dirty tabs show a dot in the close slot; hovering swaps it back to the close mark. */
+.tab-dirty-dot,
+.tab.is-dirty .tab-close-x {
+  display: none;
+}
+
+.tab.is-dirty .tab-dirty-dot,
+.tab.is-dirty .tab-close:hover .tab-close-x {
+  display: inline;
+}
+
+.tab.is-dirty .tab-close:hover .tab-dirty-dot {
+  display: none;
+}
+
+.code-editor {
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* Terminal */
