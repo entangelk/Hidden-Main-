@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { shiftSlots } from '../../engine/slots'
 import type { FileView, SceneId, ValueSlot } from '../../engine/types'
 import { acceptChange } from './acceptChange'
 import { monaco } from './monaco'
@@ -112,10 +113,9 @@ export function CodeEditor({ views, activeFile, onEdit, onRun }: Props) {
           return
         }
         created.pushStackElement()
-        const delta = change.text.length - change.rangeLength
-        const slots = slotsRef.current.map((s, i) =>
-          i < index ? s : i === index ? { ...s, end: s.end + delta } : { ...s, start: s.start + delta, end: s.end + delta },
-        )
+        // Keeps slots right for the next keystroke until React re-renders with applyEdits' view;
+        // the shift rule itself lives in the engine.
+        const slots = shiftSlots(slotsRef.current, index, change.text.length - change.rangeLength)
         slotsRef.current = slots
         const slot = slots[index]
         callbacksRef.current.onEdit(slot.sceneId, slot.field, created.getValue().slice(slot.start, slot.end))
@@ -137,7 +137,11 @@ export function CodeEditor({ views, activeFile, onEdit, onRun }: Props) {
         const to = model.getPositionAt(s.end)
         return {
           range: new monaco.Range(from.lineNumber, from.column, to.lineNumber, to.column),
-          options: { inlineClassName: 'value-slot', stickiness: monaco.editor.TrackedRangeStickiness.AlwaysGrowsWhenTypingAtEdges },
+          options:
+            s.start === s.end
+              ? // An empty value has no text to underline; show a blank underlined placeholder.
+                { after: { content: '\u00a0', inlineClassName: 'value-slot' }, showIfCollapsed: true }
+              : { inlineClassName: 'value-slot', stickiness: monaco.editor.TrackedRangeStickiness.AlwaysGrowsWhenTypingAtEdges },
         }
       }),
     )

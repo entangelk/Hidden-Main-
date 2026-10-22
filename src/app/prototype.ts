@@ -10,7 +10,7 @@ export type PrototypeScene = {
   id: SceneId
   file: string
   functionName: string
-  fields: EditableField[]
+  editableFields: EditableField[]
   /** Terminal lines per chosen `action`. */
   outcomes: Record<number, string[]>
 }
@@ -22,7 +22,7 @@ export const scenes: PrototypeScene[] = [
     id: 'triage',
     file: 'main.py',
     functionName: 'triage_alert',
-    fields: [{ name: 'action', type: 'int', options: [1, 2, 3] }],
+    editableFields: [{ name: 'action', type: 'int', options: [1, 2, 3] }],
     outcomes: {
       1: ['[02:14:07] 접근 기록 분석 시작', '[02:14:09] 외부 전송 412MB — 출발지 10.0.2.14'],
       2: ['[02:14:07] 서버 격리 요청', '[02:14:08] 격리 완료. 마지막 전송 출발지 10.0.2.14'],
@@ -33,7 +33,7 @@ export const scenes: PrototypeScene[] = [
     id: 'trace',
     file: 'event_002.py',
     functionName: 'trace_source',
-    fields: [{ name: 'action', type: 'int', options: [1, 2] }],
+    editableFields: [{ name: 'action', type: 'int', options: [1, 2] }],
     outcomes: {
       1: ['[02:16:40] 10.0.2.14 위치 추적 — 지하 2층 전력실'],
       2: ['[02:16:40] 기록 보존 완료. 보안팀 응답 없음'],
@@ -57,7 +57,7 @@ export function derivePrototype(choices: Choice[]): PrototypeState {
   const views: Record<string, FileView> = {}
   for (const file of unlockedFiles) {
     const inFile = reached.filter((s) => s.file === file)
-    const allSlots = inFile.flatMap((s) => findValueSlots(templates[file], s.id, s.functionName, s.fields))
+    const allSlots = inFile.flatMap((s) => findValueSlots(templates[file], s.id, s.functionName, s.editableFields))
     // Solved scenes show the value they were solved with, written back as a literal.
     const fixed: PlayerEdits = {}
     for (const s of inFile) {

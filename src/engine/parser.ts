@@ -2,7 +2,8 @@ import type { Choice, EditableField, ParseError, ParseResult, SceneId, Value } f
 
 type Literal = { kind: 'int' | 'float'; value: number } | { kind: 'bool'; value: boolean } | { kind: 'str'; value: string }
 
-const INT = /^-?\d+$/
+// Python 3 rejects leading zeros (`01`), so only `0` may start with 0.
+const INT = /^-?(0|[1-9]\d*)$/
 const FLOAT = /^-?(\d+\.\d*|\.\d+)$/
 
 /** Reads one Python literal: int, float, True/False, or a single/double-quoted string. */
@@ -18,7 +19,9 @@ export function readLiteral(raw: string): Literal | null {
       const c = s[i]
       if (c === '\\') {
         if (i + 1 >= s.length - 1) return null // a trailing backslash would escape the closing quote
-        out += s[++i]
+        const next = s[++i]
+        // Python escapes that matter for a one-line value; unknown escapes keep the backslash.
+        out += next === 'n' ? '\n' : next === 't' ? '\t' : '\\\'"'.includes(next) ? next : '\\' + next
       } else if (c === quote) {
         return null // unescaped closing quote before the end: not a single literal
       } else {
@@ -47,7 +50,7 @@ function check(field: EditableField, lit: Literal): { value: Value } | ParseErro
 }
 
 /** Validates the raw literal of every field. All errors are reported, not just the first. */
-export function parseChoice(
+export function parse(
   sceneId: SceneId,
   fields: EditableField[],
   literals: Record<string, string>,
@@ -68,5 +71,5 @@ export function parseChoice(
 export function formatLiteral(value: Value): string {
   if (typeof value === 'boolean') return value ? 'True' : 'False'
   if (typeof value === 'number') return String(value)
-  return `"${value.replace(/["\\]/g, '\\$&')}"`
+  return `"${value.replace(/["\\]/g, '\\$&').replace(/\n/g, '\\n').replace(/\t/g, '\\t')}"`
 }

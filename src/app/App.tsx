@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { parseChoice } from '../engine/parser'
+import { parse } from '../engine/parser'
 import { applyEdits } from '../engine/slots'
 import type { Choice, FileView, PlayerEdits, SceneId } from '../engine/types'
 import { CodeEditor } from '../ui/editor/CodeEditor'
@@ -15,6 +15,9 @@ const lineOf = (text: string, offset: number) => text.slice(0, offset).split('\n
 
 export default function App() {
   const [choices, setChoices] = useState<Choice[]>([])
+  // Mirrors `choices` synchronously, like editsRef below: two runs fired before a re-render must
+  // not both solve the same scene.
+  const choicesRef = useRef<Choice[]>([])
   const [edits, setEdits] = useState<PlayerEdits>({})
   // Same value as `edits`, updated synchronously: a run fired right after a keystroke (before
   // React re-renders) must still see that keystroke.
@@ -54,6 +57,8 @@ export default function App() {
   // Architecture §3: every early exit only prints; state changes happen after validation passes.
   const run = useCallback(() => {
     const print = (...lines: string[]) => setTerminalLines((prev) => [...prev, ...lines])
+    const choices = choicesRef.current
+    const state = derivePrototype(choices)
     const scene = state.currentScene
     if (!scene) {
       print('처리할 사건이 없습니다.')
@@ -68,7 +73,7 @@ export default function App() {
     const literals = Object.fromEntries(
       view.valueSlots.map((s) => [s.field, edits[scene.id]?.[s.field] ?? s.defaultLiteral]),
     )
-    const result = parseChoice(scene.id, scene.fields, literals)
+    const result = parse(scene.id, scene.editableFields, literals)
     if (!result.ok) {
       const shown = applyEdits(view, edits)
       print(
@@ -76,7 +81,7 @@ export default function App() {
         'Traceback (most recent call last):',
         ...result.errors.flatMap((error) => {
           const slot = shown.valueSlots.find((s) => s.field === error.field)
-          const field = scene.fields.find((f) => f.name === error.field)!
+          const field = scene.editableFields.find((f) => f.name === error.field)!
           return [
             `  File "${scene.file}", line ${slot ? lineOf(shown.text, slot.start) : '?'}, in ${scene.functionName}`,
             parseErrorLine(error, field),
@@ -92,13 +97,14 @@ export default function App() {
       ...scene.outcomes[result.choice.values.action as number],
       ...created.map((f) => `[workspace] ${f} 생성됨`),
     )
-    setChoices((prev) => [...prev, result.choice])
+    choicesRef.current = [...choices, result.choice]
+    setChoices(choicesRef.current)
     updateEdits((prev) => {
       const rest = { ...prev }
       delete rest[scene.id]
       return rest
     })
-  }, [state, activeFile, choices, updateEdits])
+  }, [activeFile, updateEdits])
 
   // Ctrl/Cmd+Enter outside the editor. Inside it, Monaco's command handles the key and stops
   // the event, so it never reaches this listener.

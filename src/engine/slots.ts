@@ -6,7 +6,10 @@ const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 // string without `#` or backslashes (so the end-of-line comment start is unambiguous).
 const LITERAL = String.raw`-?\d+(?:\.\d*)?|-?\.\d+|True|False|"[^"#\\]*"|'[^'#\\]*'`
 
-/** [start, end) of the `def functionName(` block: through the last line indented deeper than it. */
+/**
+ * [start, end) of the `def functionName(` block: through the last code line indented deeper than
+ * the def. Blank and comment-only lines never end the block (Python allows a comment at any column).
+ */
 export function functionBlock(text: string, functionName: string): [number, number] | null {
   const def = new RegExp(`^( *)def ${escapeRe(functionName)}\\(`, 'm').exec(text)
   if (!def) return null
@@ -17,7 +20,8 @@ export function functionBlock(text: string, functionName: string): [number, numb
   while (cursor < text.length) {
     const lineEnd = text.indexOf('\n', cursor)
     const line = text.slice(cursor, lineEnd === -1 ? text.length : lineEnd)
-    if (line.trim() !== '') {
+    const code = line.trim()
+    if (code !== '' && !code.startsWith('#')) {
       if (line.length - line.trimStart().length <= indent) break
       end = lineEnd === -1 ? text.length : lineEnd
     }
@@ -49,21 +53,26 @@ export function findValueSlots(
   return slots.sort((a, b) => a.start - b.start)
 }
 
+/** Slots after an edit of `slots[index]` changed its length by `delta` (architecture §6.2). */
+export function shiftSlots(slots: ValueSlot[], index: number, delta: number): ValueSlot[] {
+  return slots.map((s, i) =>
+    i < index ? s : i === index ? { ...s, end: s.end + delta } : { ...s, start: s.start + delta, end: s.end + delta },
+  )
+}
+
 /**
  * Replaces each slot's literal with the player's edit (when there is one) and moves the slots
  * after it by the length difference (architecture §6.2).
  */
 export function applyEdits(view: FileView, edits: PlayerEdits): FileView {
   let text = view.text
-  let shift = 0
-  const valueSlots = view.valueSlots.map((slot) => {
-    const start = slot.start + shift
-    const end = slot.end + shift
+  let valueSlots = view.valueSlots
+  valueSlots.forEach((_, index) => {
+    const slot = valueSlots[index]
     const edit = edits[slot.sceneId]?.[slot.field]
-    if (edit === undefined) return { ...slot, start, end }
-    text = text.slice(0, start) + edit + text.slice(end)
-    shift += edit.length - (end - start)
-    return { ...slot, start, end: start + edit.length }
+    if (edit === undefined) return
+    text = text.slice(0, slot.start) + edit + text.slice(slot.end)
+    valueSlots = shiftSlots(valueSlots, index, edit.length - (slot.end - slot.start))
   })
   return { text, valueSlots }
 }

@@ -16,7 +16,7 @@ ideation §11의 "첫 번째 프로토타입"을 만든다. **코드 편집 → 
 - `main.py` 하나로 시작, 함수 하나에 선택지 3개(주석) + `action = 1`
 - Input Parser 1차 구현 ([아키텍처 §6](../architecture/00_overview.md#6-input-parser-규칙-mvp)): 원문 리터럴 해석, 허용값 검증, 오류 메시지
 - Editor 편집 제한: `acceptChange`로 값 영역 밖·여러 영역·줄바꿈 변경 거부, 값 영역 텍스트를 편집 값으로 전달 (DB-02, [아키텍처 §6.2](../architecture/00_overview.md#62-편집-반영-규칙))
-- 편집 가능한 값 영역의 시각 표시: 점선 밑줄로 결정(`.value-slot`, R-01에 맞게 색·굵기 최소)
+- 편집 가능한 값 영역의 시각 표시: 점선 밑줄로 결정(`.value-slot`, R-01에 맞게 색·굵기 최소). 값이 비면 밑줄 친 빈칸으로 자리를 표시
 - `Ctrl/Cmd+Enter` → parser → 선택값별 Terminal 로그. 현재 사건의 파일(P02에서는 `main.py`, 해결 후에는 `event_002.py`)이 활성 탭이 아니면 Terminal 안내만 (SoT §3.5)
 - 유효한 선택 시 Explorer에 `event_002.py` 추가 (팝업·전환 없음, R-05)
 - `event_002.py` 클릭 시 다음 사건 표시

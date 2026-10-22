@@ -28,6 +28,7 @@ describe('acceptChange', () => {
     expect(acceptChange(slots, { start: 10, end: 23, text: '' })).toBe(-1)
     expect(acceptChange(slots, { start: 11, end: 11, text: '\n' })).toBe(-1)
     expect(acceptChange(slots, { start: 11, end: 11, text: '1\r\n' })).toBe(-1)
+    expect(acceptChange(slots, { start: 11, end: 11, text: '\r' })).toBe(-1)
     expect(acceptChange([], { start: 0, end: 0, text: 'x' })).toBe(-1)
   })
 })

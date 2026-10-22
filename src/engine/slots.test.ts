@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { applyEdits, findValueSlots, functionBlock } from './slots'
+import { applyEdits, findValueSlots, functionBlock, shiftSlots } from './slots'
 import type { EditableField } from './types'
 
 const template = [
@@ -8,6 +8,8 @@ const template = [
   '    def triage(self):',
   '        # 1. analyze',
   '        # 2. action = 2 isolates the host',
+  '        # action = 3',
+  '# column-0 comments do not end the function',
   '        alert_id = 2048',
   '',
   '        action = 1  # choose',
@@ -35,6 +37,12 @@ describe('functionBlock', () => {
     expect(block).not.toContain('def later')
   })
 
+  it('is not cut short by a column-0 comment, and ends at the next code line at the def indent', () => {
+    const [, end] = functionBlock(template, 'triage')!
+    expect(end).toBeGreaterThan(template.indexOf('# column-0 comments'))
+    expect(end).toBeLessThan(template.indexOf('    def later'))
+  })
+
   it('returns null for a missing function', () => {
     expect(functionBlock(template, 'missing')).toBeNull()
   })
@@ -52,6 +60,19 @@ describe('findValueSlots', () => {
     expect(slots[0].start).toBe(actionLine + '        action = '.length)
   })
 
+  it('never takes a commented-out assignment, even one that is exactly `# field = literal`', () => {
+    const commentLine = template.indexOf('        # action = 3')
+    expect(slots[0].start).toBeGreaterThan(commentLine + 20)
+    expect(template.slice(slots[0].start - '        action = '.length, slots[0].end)).toBe('        action = 1')
+  })
+
+  it('locates the literal after `=` even when the field name contains the same characters', () => {
+    const text = '    def f(self):\n        a1 = 1\n'
+    const [slot] = findValueSlots(text, 's', 'f', [{ name: 'a1', type: 'int', options: [1] }])
+    expect(text.slice(slot.start, slot.end)).toBe('1')
+    expect(slot.start).toBe(text.indexOf('= 1') + 2)
+  })
+
   it('ignores lines that are not editable fields', () => {
     expect(findValueSlots(template, 's1', 'triage', [{ name: 'alert_id', type: 'int', options: [] }])[0]?.defaultLiteral).toBe('2048')
     expect(findValueSlots(template, 's1', 'triage', [{ name: 'missing', type: 'bool' }])).toEqual([])
@@ -60,6 +81,14 @@ describe('findValueSlots', () => {
   it('returns slots sorted by position regardless of field order', () => {
     const reversed = findValueSlots(template, 's1', 'triage', [...fields].reverse())
     expect(reversed.map((s) => s.field)).toEqual(['action', 'target'])
+  })
+})
+
+describe('shiftSlots', () => {
+  const s = (start: number, end: number) => ({ sceneId: 's', field: 'f', start, end, defaultLiteral: '' })
+  it('grows the edited slot, moves later ones, and leaves earlier ones', () => {
+    expect(shiftSlots([s(0, 1), s(5, 6), s(9, 10)], 1, 2)).toEqual([s(0, 1), s(5, 8), s(11, 12)])
+    expect(shiftSlots([s(0, 1), s(5, 6)], 0, -1)).toEqual([s(0, 0), s(4, 5)])
   })
 })
 
