@@ -35,6 +35,23 @@ describe('buildFileTree', () => {
     })
   })
 
+  it('sorts names case-insensitively with a fixed locale (order does not depend on the machine)', () => {
+    // Raw code-unit order would put 'B.py' first ('B' < 'a').
+    const tree = buildFileTree(['B.py', 'c.py', 'a.py'])
+    expect(tree.map((n) => n.name)).toEqual(['a.py', 'B.py', 'c.py'])
+  })
+
+  it('collapses an exact duplicate path into one node', () => {
+    expect(buildFileTree(['main.py', 'main.py'])).toEqual([
+      { kind: 'file', name: 'main.py', path: 'main.py' },
+    ])
+  })
+
+  it('rejects a path that is both a file and a folder, in either order', () => {
+    expect(() => buildFileTree(['a', 'a/b.py'])).toThrow('both a file and a folder: a')
+    expect(() => buildFileTree(['a/b.py', 'a'])).toThrow('both a file and a folder: a')
+  })
+
   it('returns an empty tree for no paths', () => {
     expect(buildFileTree([])).toEqual([])
   })

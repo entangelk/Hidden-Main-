@@ -37,6 +37,13 @@
   background: #2a2d2e;
 }
 
+.explorer-row:focus-visible,
+.tab:focus-visible,
+.tab-close:focus-visible {
+  outline: 1px solid #007fd4;
+  outline-offset: -1px;
+}
+
 .explorer-row.is-active {
   background: #37373d;
 }
@@ -88,6 +95,7 @@
 }
 
 .tab:hover .tab-close,
+.tab:focus-within .tab-close,
 .tab.is-active .tab-close,
 .tab.is-dirty .tab-close {
   visibility: visible;

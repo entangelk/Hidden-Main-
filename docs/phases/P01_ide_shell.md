@@ -20,7 +20,7 @@
 - 탭: 여러 파일 열기·전환·닫기, 수정 상태(●) 표시
 - Terminal 패널: 텍스트 줄 추가 API만 (내용은 아직 없음)
 - Status Bar: `Python`, `UTF-8`, 현재 파일명
-- `Ctrl/Cmd+Enter` 단축키 바인딩 → Terminal에 고정 문구 출력 (연결 확인용)
+- `Ctrl/Cmd+Enter` 단축키 바인딩 → Terminal에 실행 줄 출력(`$ python <활성 파일>`, 열린 탭이 없으면 `$ python`). 연결 확인용이며 P02에서 엔진 실행으로 바뀐다
 
 ## 완료 기준
 

@@ -1,10 +1,18 @@
-import { useState } from 'react'
+import { useState, type KeyboardEvent } from 'react'
 import { buildFileTree, type TreeNode } from './fileTree'
 
 type Props = {
   paths: string[]
   activeFile: string | null
   onOpen: (path: string) => void
+}
+
+// Rows act like buttons: Enter or Space activates them.
+const activateOnKey = (action: () => void) => (e: KeyboardEvent) => {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault()
+    action()
+  }
 }
 
 export function Explorer({ paths, activeFile, onOpen }: Props) {
@@ -25,11 +33,19 @@ export function Explorer({ paths, activeFile, onOpen }: Props) {
         const open = !collapsed.has(node.path)
         return (
           <li key={node.path}>
-            <div className="explorer-row" style={indent} onClick={() => toggle(node.path)}>
+            <div
+              className="explorer-row"
+              style={indent}
+              role="treeitem"
+              aria-expanded={open}
+              tabIndex={0}
+              onClick={() => toggle(node.path)}
+              onKeyDown={activateOnKey(() => toggle(node.path))}
+            >
               <span className="explorer-chevron">{open ? '▾' : '▸'}</span>
               {node.name}
             </div>
-            {open && <ul>{renderNodes(node.children, depth + 1)}</ul>}
+            {open && <ul role="group">{renderNodes(node.children, depth + 1)}</ul>}
           </li>
         )
       }
@@ -38,7 +54,11 @@ export function Explorer({ paths, activeFile, onOpen }: Props) {
           <div
             className={`explorer-row${node.path === activeFile ? ' is-active' : ''}`}
             style={indent}
+            role="treeitem"
+            aria-selected={node.path === activeFile}
+            tabIndex={0}
             onClick={() => onOpen(node.path)}
+            onKeyDown={activateOnKey(() => onOpen(node.path))}
           >
             <span className="explorer-chevron" />
             {node.name}
@@ -50,7 +70,7 @@ export function Explorer({ paths, activeFile, onOpen }: Props) {
   return (
     <aside className="explorer">
       <div className="panel-title">EXPLORER</div>
-      <ul className="explorer-tree">{renderNodes(buildFileTree(paths), 0)}</ul>
+      <ul className="explorer-tree" role="tree" aria-label="Files">{renderNodes(buildFileTree(paths), 0)}</ul>
     </aside>
   )
 }

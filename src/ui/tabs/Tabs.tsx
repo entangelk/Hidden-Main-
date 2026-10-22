@@ -8,13 +8,22 @@ type Props = {
 
 export function Tabs({ openFiles, activeFile, dirtyFiles, onSelect, onClose }: Props) {
   return (
-    <div className="tabs">
+    <div className="tabs" role="tablist">
       {openFiles.map((path) => (
         <div
           key={path}
           className={`tab${path === activeFile ? ' is-active' : ''}${dirtyFiles.has(path) ? ' is-dirty' : ''}`}
           title={path}
+          role="tab"
+          aria-selected={path === activeFile}
+          tabIndex={0}
           onClick={() => onSelect(path)}
+          onKeyDown={(e) => {
+            if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+              e.preventDefault()
+              onSelect(path)
+            }
+          }}
         >
           <span>{path.split('/').pop()}</span>
           <button

@@ -27,14 +27,14 @@ export default function App() {
 
   // P01 wiring check only: P02 replaces this with the parser/engine run.
   const run = useCallback(() => {
-    if (activeFile) setTerminalLines((prev) => [...prev, `$ python ${activeFile}`])
+    setTerminalLines((prev) => [...prev, activeFile ? `$ python ${activeFile}` : '$ python'])
   }, [activeFile])
 
-  // Ctrl/Cmd+Enter outside the editor; inside it, Monaco's own command handles the key.
+  // Ctrl/Cmd+Enter outside the editor. Inside it, Monaco's command handles the key and stops
+  // the event, so it never reaches this listener.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Enter' || !(e.ctrlKey || e.metaKey)) return
-      if (e.target instanceof Element && e.target.closest('.monaco-editor')) return
       e.preventDefault()
       run()
     }
