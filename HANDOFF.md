@@ -1,6 +1,6 @@
 # HANDOFF
 
-> 마지막 자가 검수: 2026-10-22 · 24줄
+> 마지막 자가 검수: 2026-10-22 · 23줄
 
 ## 현재 상태
 
@@ -20,5 +20,4 @@
 
 ## 다음 작업
 
-1. P01 4차 보강분 재검증 (진행 중)
-2. P02 핵심 루프 프로토타입 ([`docs/phases/P02_core_loop_prototype.md`](docs/phases/P02_core_loop_prototype.md))
+1. P02 핵심 루프 프로토타입 ([`docs/phases/P02_core_loop_prototype.md`](docs/phases/P02_core_loop_prototype.md))

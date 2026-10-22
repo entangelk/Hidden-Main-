@@ -67,6 +67,12 @@ describe('treeKeyAction', () => {
     expect(treeKeyAction('ArrowLeft', folder('incidents', false), all)).toBeNull()
   })
 
+  it('ArrowLeft from a deeply nested item focuses its immediate parent folder, not the top one', () => {
+    const nested = visiblePaths(buildFileTree(['a/b/c.py']), new Set())
+    expect(treeKeyAction('ArrowLeft', file('a/b/c.py'), nested)).toEqual({ type: 'focus', path: 'a/b' })
+    expect(treeKeyAction('ArrowLeft', folder('a/b', false), nested)).toEqual({ type: 'focus', path: 'a' })
+  })
+
   it('does not handle other keys', () => {
     expect(treeKeyAction('a', file('main.py'), all)).toBeNull()
   })
