@@ -150,7 +150,14 @@ export default function App() {
           onSelect={setActiveFile}
           onClose={close}
         />
-        <CodeEditor files={state.files} edits={edits} activeFile={activeFile} onEdit={onEdit} onRun={run} />
+        <CodeEditor
+          files={state.files}
+          edits={edits}
+          revision={progress.choices.length}
+          activeFile={activeFile}
+          onEdit={onEdit}
+          onRun={run}
+        />
         <Terminal lines={terminalLines} />
       </main>
       <StatusBar activeFile={activeFile} />

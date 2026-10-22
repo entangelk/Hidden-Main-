@@ -21,7 +21,7 @@ const found: Transition['when'] = [{ ref: { flag: 'device_found' }, op: '==', va
 
 export const incident0214 = {
   id: 'incident-0214',
-  version: 2,
+  version: 3,
   initialFiles: [
     { path: 'main.py', content: mainPy },
     { path: 'config/settings.py', content: settingsPy },
@@ -83,7 +83,13 @@ export const incident0214 = {
       functionName: 'review_access',
       editableFields: [{ name: 'action', type: 'int', options: [1, 2] }],
       transitions: [
-        { when: when('action', 1), effects: [{ flag: 'locked', value: true }], log: [info('[auth] 계정을 잠갔다.')], next: go('preserve') },
+        {
+          when: [...when('action', 1), { ref: { flag: 'backup_suspect' }, op: '==', value: true }],
+          effects: [{ flag: 'locked', value: true }],
+          log: [info('[auth] backup 계정을 잠갔다.')],
+          next: go('preserve'),
+        },
+        { when: when('action', 1), effects: [], log: [info('[auth] 계정 정책을 확인했다. 바뀐 것은 없다.')], next: go('preserve') },
         { when: [], effects: [], log: [info('[auth] 감시 규칙을 걸었다.')], next: go('preserve') },
       ],
     },
@@ -136,6 +142,12 @@ export const incident0214 = {
       functionName: 'enter_room',
       editableFields: [{ name: 'room', type: 'string', options: ['B2-03', 'B2-07', 'B2-11'] }],
       transitions: [
+        {
+          when: [...when('room', 'B2-07'), { ref: { flag: 'locked' }, op: '==', value: true }],
+          effects: [{ flag: 'device_found', value: true }, { flag: 'device_locked', value: true }],
+          log: [info('[facility] B2-07 입장. 팬 소리가 들린다.')],
+          next: go('device'),
+        },
         { when: when('room', 'B2-07'), effects: [{ flag: 'device_found', value: true }], log: [info('[facility] B2-07 입장. 팬 소리가 들린다.')], next: go('device') },
         { when: [], effects: [], log: [info('[facility] 입장. 조용하다.')], next: go('device') },
       ],

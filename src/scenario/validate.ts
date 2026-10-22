@@ -3,6 +3,7 @@
 import { holds } from '../engine/condition'
 import { derive } from '../engine/derive'
 import { parse } from '../engine/parser'
+import { DIRECTIVE, parseIf } from '../engine/render'
 import { findValueSlots, functionBlock } from '../engine/slots'
 import type { Choice, EditableField, Scenario, Scene, Value } from '../engine/types'
 
@@ -40,6 +41,8 @@ export type Exploration = {
   reachedScenes: Set<string>
   /** `${sceneId}#${index}` of every transition taken on some path. */
   firedTransitions: Set<string>
+  /** Outcomes seen for each comment-variant condition, keyed `${sceneId}: ${directive line}`. */
+  variantOutcomes: Map<string, Set<boolean>>
   states: number
 }
 
@@ -81,6 +84,7 @@ export function explore(scenario: Scenario, problems: string[]): Exploration {
   const endings = new Set<string>()
   const reachedScenes = new Set<string>()
   const firedTransitions = new Set<string>()
+  const variantOutcomes = new Map<string, Set<boolean>>()
   const reported = new Set<string>()
   const seen = new Set<string>()
   const queue: Choice[][] = [[]]
@@ -105,7 +109,18 @@ export function explore(scenario: Scenario, problems: string[]): Exploration {
     seen.add(key)
     const scene = scenes.get(state.currentSceneId!)!
     reachedScenes.add(scene.id)
-    const file = scenario.stages.find((st) => st.id === scene.stageId)!.filePath
+    const stage = scenario.stages.find((st) => st.id === scene.stageId)!
+    const file = stage.filePath
+    // The scene was just reached, so the current flags are the ones its comment variants use.
+    const block = functionBlock(stage.template, scene.functionName)
+    for (const line of block ? stage.template.slice(block[0], block[1]).split('\n') : []) {
+      const d = DIRECTIVE.exec(line)
+      if (!d || d[1] !== 'if') continue
+      const key = `${scene.id}: ${line.trim()}`
+      const seen = variantOutcomes.get(key) ?? new Set<boolean>()
+      seen.add(holds([parseIf(d[2], line)], {}, state.flags))
+      variantOutcomes.set(key, seen)
+    }
     for (const problem of optionProblems(scene, state.files[file].text)) {
       if (!reported.has(problem)) problems.push(problem)
       reported.add(problem)
@@ -116,7 +131,7 @@ export function explore(scenario: Scenario, problems: string[]): Exploration {
       queue.push([...choices, { sceneId: scene.id, values }])
     }
   }
-  return { endings, reachedScenes, firedTransitions, states: seen.size }
+  return { endings, reachedScenes, firedTransitions, variantOutcomes, states: seen.size }
 }
 
 /** Static checks of data and templates. */
@@ -204,6 +219,9 @@ export function validateScenario(scenario: Scenario): { problems: string[]; expl
   const exploration = explore(scenario, problems)
   for (const s of scenario.scenes) if (!exploration.reachedScenes.has(s.id)) problems.push(`${s.id}: unreachable`)
   for (const e of scenario.endings) if (!exploration.endings.has(e.id)) problems.push(`ending ${e.id}: unreachable`)
+  for (const [directive, outcomes] of exploration.variantOutcomes) {
+    if (!outcomes.has(true)) problems.push(`${directive} is never true when the scene is reached`)
+  }
   for (const s of scenario.scenes) {
     s.transitions.forEach((_, i) => {
       if (exploration.reachedScenes.has(s.id) && !exploration.firedTransitions.has(`${s.id}#${i}`)) {

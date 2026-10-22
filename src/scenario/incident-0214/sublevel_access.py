@@ -47,7 +47,7 @@ class SublevelAccess:
         # 선반 뒤에 전원이 들어온 낡은 서버가 있다. 라벨: BACKUP-02.
         # 화면에는 02:14에 실행되는 동기화 작업 하나만 떠 있다.
         # @end
-        # @if locked == True
+        # @if device_locked == True
         # 작업 상태: 인증 실패 — backup 계정이 잠겨 있다.
         # @end
         # @if device_found == True

@@ -8,12 +8,14 @@ type Props = {
   /** Engine views before player edits (DerivedState.files). */
   files: Record<string, FileView>
   edits: PlayerEdits
+  /** Changes whenever progress changes (a scene solved, a restore), even if no engine text did. */
+  revision: number
   activeFile: string | null
   onEdit: (sceneId: SceneId, field: string, literal: string) => void
   onRun: () => void
 }
 
-export function CodeEditor({ files, edits, activeFile, onEdit, onRun }: Props) {
+export function CodeEditor({ files, edits, revision, activeFile, onEdit, onRun }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
   const decorationsRef = useRef<monaco.editor.IEditorDecorationsCollection | null>(null)
@@ -24,8 +26,10 @@ export function CodeEditor({ files, edits, activeFile, onEdit, onRun }: Props) {
   // may re-render with edits a few keystrokes behind); they are recomputed only when the engine
   // text changes or another file is shown.
   const slotsRef = useRef<ValueSlot[]>([])
-  // Engine text each model was last built from. A model is rewritten only when this changes, never
-  // because the edits React passes in lag behind what is already in the model.
+  // Engine text (and progress revision) each model was last built from. A model is rewritten only
+  // when this changes, never because the edits React passes in lag behind what is already in it.
+  // The revision matters when a scene is solved with another spelling of its default value
+  // (`50.0` for `50`): the engine text stays the same, but the screen must show the engine's form.
   const baseRef = useRef(new Map<string, string>())
   // Set while this component itself changes a model, so its change handler ignores the event.
   const writingRef = useRef(false)
@@ -111,8 +115,9 @@ export function CodeEditor({ files, edits, activeFile, onEdit, onRun }: Props) {
     const engineChanged = new Set<string>()
     for (const [path, model] of modelsRef.current) {
       const base = files[path]
-      if (!base || baseRef.current.get(path) === base.text) continue
-      baseRef.current.set(path, base.text)
+      const key = `${revision}\n${base?.text}`
+      if (!base || baseRef.current.get(path) === key) continue
+      baseRef.current.set(path, key)
       const shown = applyEdits(base, edits)
       if (model.getValue() !== shown.text) write(model, shown.text)
       engineChanged.add(path)
@@ -134,7 +139,7 @@ export function CodeEditor({ files, edits, activeFile, onEdit, onRun }: Props) {
     let model = modelsRef.current.get(activeFile)
     if (!model) {
       const created = monaco.editor.createModel(applyEdits(base, edits).text, 'python', monaco.Uri.file(activeFile))
-      baseRef.current.set(activeFile, base.text)
+      baseRef.current.set(activeFile, `${revision}\n${base.text}`)
       created.onDidChangeContent((e) => {
         if (writingRef.current) return
         const change = e.changes.length === 1 ? e.changes[0] : null
@@ -189,7 +194,7 @@ export function CodeEditor({ files, edits, activeFile, onEdit, onRun }: Props) {
     if (revealRef.current.delete(activeFile) && slotsRef.current.length) {
       editor.revealLineInCenterIfOutsideViewport(model.getPositionAt(slotsRef.current[0].start).lineNumber)
     }
-  }, [activeFile, files, edits])
+  }, [activeFile, files, edits, revision])
 
   return <div className="code-editor" ref={containerRef} />
 }

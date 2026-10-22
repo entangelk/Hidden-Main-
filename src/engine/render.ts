@@ -10,10 +10,10 @@ import type { Choice, Clause, FileView, PlayerEdits, Scene, SceneId, Stage, Valu
 //     # @else
 //     # ...otherwise...
 //     # @end
-const DIRECTIVE = /^ *# @(if|else|end)\b(.*)$/
+export const DIRECTIVE = /^ *# @(if|else|end)\b(.*)$/
 const IF_ARGS = /^ +([A-Za-z_]\w*) *(==|!=|>=|<=) *(.+?) *$/
 
-function parseIf(args: string, line: string): Clause {
+export function parseIf(args: string, line: string): Clause {
   const m = IF_ARGS.exec(args)
   const lit = m && readLiteral(m[3])
   if (!m || !lit) throw new Error(`Bad @if directive: ${line.trim()}`)

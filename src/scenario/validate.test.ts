@@ -16,6 +16,8 @@ describe('validateScenario', () => {
     expect(problems).toEqual([])
     expect([...exploration.endings].sort()).toEqual(['resolved', 'sealed'])
     expect(exploration.reachedScenes.size).toBe(incident0214.scenes.length)
+    // Exhaustive play grows with every flag; keep an eye on it (about 11.5k states at version 3).
+    expect(exploration.states).toBeLessThan(20_000)
   }, 60_000) // exhaustive play over every distinct (scene, flags) state takes a few seconds
 
   it('reports broken data and templates (the checks bite)', () => {
@@ -56,6 +58,21 @@ describe('validateScenario', () => {
     ['unreachable scene', (s) => s.scenes[0].transitions.forEach((t) => (t.next = { scene: 'report' })), 'contain: unreachable'],
     ['@if on a flag nothing sets', (s) => (s.stages[1].template = s.stages[1].template.replace('@if isolated', '@if isolatd')), 'incidents/report.py: @if on flag "isolatd" that no transition sets'],
     ['flag never read', (s) => s.scenes[1].transitions[1].effects.push({ flag: 'unused', value: 1 }), 'flag "unused" is set but never read'],
+    ['missing function', (s) => (s.stages[1].template = s.stages[1].template.replace('def write_report', 'def write_rep0rt')), 'incidents/report.py: scene function missing (write_report)'],
+    ['field without a literal slot', (s) => (s.stages[1].template = s.stages[1].template.replace('        action = 1\n', '        action = int("1")\n')), 'report: a field has no literal slot (default must be a plain literal)'],
+    ['string option not explained', (s) => {
+      s.scenes[2].editableFields = [{ name: 'action', type: 'string', options: ['x', 'y'] }]
+      s.stages[1].template = s.stages[1].template.replace('        action = 1\n', '        action = "x"  # "x"\n')
+      s.scenes[2].transitions = [{ when: [], effects: [], log: [], next: { ending: 'escalated' } }, ...s.scenes[2].transitions.slice(0, 0)]
+      s.scenes[2].transitions.unshift({ when: [{ ref: { flag: 'isolated' }, op: '==', value: true }], effects: [], log: [], next: { ending: 'contained' } })
+    }, 'report.action: option "y" not explained in comments'],
+    ['number range not explained', (s) => {
+      s.scenes[1].editableFields = [{ name: 'isolate', type: 'number', min: 0, max: 9 }]
+      s.stages[0].template = s.stages[0].template.replace('isolate = False', 'isolate = 0')
+      s.scenes[1].transitions = [s.scenes[1].transitions[1]]
+      s.scenes[1].transitions[0].effects = [{ flag: 'isolated', value: true }]
+    }, 'contain.isolate: range 0~9 not explained in comments'],
+    ['comment variant that is never true', (s) => (s.stages[1].template = s.stages[1].template.replace('@if isolated == True', '@if isolated == False')), 'report: # @if isolated == False is never true when the scene is reached'],
     [
       'transition never taken',
       (s) => s.scenes[1].transitions.unshift({ when: [{ ref: { choice: 'isolate' }, op: '==', value: 'yes' }], effects: [], log: [], next: { scene: 'report' } }),
@@ -63,6 +80,26 @@ describe('validateScenario', () => {
     ],
   ] as [string, (s: Scenario) => void, string][])('reports %s', (_, edit, expected) => {
     expect(problemsOf(edit)).toContain(expected)
+  })
+
+  it('explores the values next to a number condition, so a branch reachable only there is taken', () => {
+    // Only a value other than 0, 50 and 100 takes the first transition: 49 or 51 must be tried.
+    const problems = problemsOf((s) => {
+      s.scenes[1].editableFields = [{ name: 'isolate', type: 'number', min: 0, max: 100 }]
+      s.stages[0].template = s.stages[0].template
+        .replace('isolate = False', 'isolate = 0')
+        .replace('        # 서버를 격리하려면', '        # isolate 범위: 0~100\n        # 서버를 격리하려면')
+      s.scenes[1].transitions = [
+        {
+          when: [0, 50, 100].map((v) => ({ ref: { choice: 'isolate' }, op: '!=' as const, value: v })),
+          effects: [{ flag: 'isolated', value: true }],
+          log: [],
+          next: { scene: 'report' },
+        },
+        { when: [], effects: [], log: [], next: { scene: 'report' } },
+      ]
+    })
+    expect(problems).toEqual([])
   })
 
   it('checks option explanations on the rendered screen, not the raw template', () => {
