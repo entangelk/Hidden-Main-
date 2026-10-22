@@ -53,5 +53,7 @@ export function runScene(
       ],
     }
   }
-  return { lines: [], progress: apply(scenario, progress, result.choice) }
+  const next = apply(scenario, progress, result.choice)
+  // apply only refuses what parse already rejects; if they ever disagree, change nothing.
+  return next === progress ? { lines: [] } : { lines: [], progress: next }
 }

@@ -38,6 +38,26 @@ export function cleanWorkspace(workspace: WorkspaceView, visibleFiles: string[])
   return { openFiles, activeFile }
 }
 
+const isObject = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && x !== null && !Array.isArray(x)
+const isValue = (x: unknown) => typeof x === 'boolean' || typeof x === 'string' || (typeof x === 'number' && Number.isFinite(x))
+const allOf = (x: unknown, ok: (v: unknown) => boolean) => isObject(x) && Object.values(x).every(ok)
+
+/** Shape check of a parsed save. Anything else counts as corrupt (data contract §9). */
+function isSnapshot(x: unknown): x is SaveSnapshot {
+  if (!isObject(x) || x.schemaVersion !== SCHEMA_VERSION || typeof x.scenarioVersion !== 'number') return false
+  const { progress, playerEdits, workspace } = x
+  return (
+    isObject(progress) &&
+    Array.isArray(progress.choices) &&
+    progress.choices.every((c) => isObject(c) && typeof c.sceneId === 'string' && allOf(c.values, isValue)) &&
+    allOf(playerEdits, (fields) => allOf(fields, (v) => typeof v === 'string')) &&
+    isObject(workspace) &&
+    Array.isArray(workspace.openFiles) &&
+    workspace.openFiles.every((f) => typeof f === 'string') &&
+    (workspace.activeFile === null || typeof workspace.activeFile === 'string')
+  )
+}
+
 /**
  * Reads the save for `scenario` (data contract §9). Never throws: unreadable or incompatible saves
  * fall back to a new game, with a notice line.
@@ -52,26 +72,28 @@ export function restore(store: KeyValueStore | null, scenario: Scenario, fresh: 
   }
   if (raw === null) return newGame()
 
-  let snap: SaveSnapshot
+  let snap: unknown
   try {
     snap = JSON.parse(raw)
-    if (snap?.schemaVersion !== SCHEMA_VERSION || !Array.isArray(snap.progress?.choices)) throw new Error()
   } catch {
-    return newGame('저장된 진행을 읽을 수 없어 처음부터 시작합니다.')
+    snap = undefined
   }
+  if (!isSnapshot(snap)) return newGame('저장된 진행을 읽을 수 없어 처음부터 시작합니다.')
 
   const sameVersion = snap.scenarioVersion === scenario.version
   const choices = validPrefix(scenario, snap.progress.choices)
   const visible = Object.keys(derive(scenario, { choices }).files)
-  const workspace = cleanWorkspace(snap.workspace ?? fresh, visible)
+  const workspace = cleanWorkspace(snap.workspace, visible)
   const restored: Restored = {
     progress: { choices },
     // Edits only make sense against the same scenario text; on a version change they start over.
-    playerEdits: sameVersion && choices.length === snap.progress.choices.length ? (snap.playerEdits ?? {}) : {},
+    playerEdits: sameVersion && choices.length === snap.progress.choices.length ? snap.playerEdits : {},
     workspace: workspace.openFiles.length ? workspace : fresh,
   }
   if (choices.length < snap.progress.choices.length) {
-    restored.notice = '시나리오가 바뀌어 일부 진행을 되돌렸습니다.'
+    restored.notice = sameVersion
+      ? '저장된 진행 일부를 읽을 수 없어 그 앞까지만 이어갑니다.'
+      : '시나리오가 바뀌어 일부 진행을 되돌렸습니다.'
   }
   return restored
 }

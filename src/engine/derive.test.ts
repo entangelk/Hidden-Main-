@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { miniScenario as scenario } from '../scenario/mini'
 import { apply, derive, validPrefix } from './derive'
-import type { Choice, Progress } from './types'
+import type { Choice, Progress, Scenario } from './types'
 
 const c = (sceneId: string, values: Choice['values']): Choice => ({ sceneId, values })
 const at = (...choices: Choice[]): Progress => ({ choices })
@@ -78,6 +78,79 @@ describe('derive — transitions, flags and reveal', () => {
   })
 })
 
+describe('derive — solved values and flag timing', () => {
+  it('shows a solved value as chosen, not the template default', () => {
+    const main = derive(scenario, at(c('triage', { action: 2 }))).files['main.py'].text
+    expect(main).toContain('        action = 2\n')
+    expect(main).not.toContain('        action = 1\n')
+  })
+
+  // A small inline scenario where a flag changes after a scene is shown and is set twice.
+  const timing: Scenario = {
+    id: 't',
+    version: 1,
+    initialFiles: [],
+    stages: [
+      {
+        id: 's',
+        filePath: 'f.py',
+        template: [
+          'class T:',
+          '',
+          '    def a(self):',
+          '        x = 1',
+          '',
+          '    def b(self):',
+          '        # @if seen == True',
+          '        # seen before',
+          '        # @else',
+          '        # first time',
+          '        # @end',
+          '        x = 1',
+          '',
+          '    def c(self):',
+          '        x = 1',
+          '',
+        ].join('\n'),
+        sceneIds: ['a', 'b', 'c'],
+      },
+    ],
+    scenes: (['a', 'b', 'c'] as const).map((id, i) => ({
+      id,
+      stageId: 's',
+      functionName: id,
+      editableFields: [{ name: 'x', type: 'int' as const, options: [1] }],
+      transitions: [
+        {
+          when: [],
+          effects: [
+            { flag: 'level', value: i + 1 },
+            ...(id === 'b' ? [{ flag: 'seen', value: true }] : []),
+          ],
+          log: [],
+          next: id === 'c' ? { ending: 'end' } : { scene: id === 'a' ? 'b' : 'c' },
+        },
+      ],
+    })),
+    endings: [{ id: 'end', log: [] }],
+    startSceneId: 'a',
+  }
+
+  it('keeps a comment variant as it was when the scene was reached, even after the flag changes', () => {
+    const shown = derive(timing, at(c('a', { x: 1 }))).files['f.py'].text
+    expect(shown).toContain('# first time')
+    const later = derive(timing, at(c('a', { x: 1 }), c('b', { x: 1 }))) // b sets seen = True
+    expect(later.flags.seen).toBe(true)
+    expect(later.files['f.py'].text).toContain('# first time')
+    expect(later.files['f.py'].text).not.toContain('# seen before')
+  })
+
+  it('a later effect overwrites an earlier value of the same flag', () => {
+    expect(derive(timing, at(c('a', { x: 1 }))).flags.level).toBe(1)
+    expect(derive(timing, at(c('a', { x: 1 }), c('b', { x: 1 }))).flags.level).toBe(2)
+  })
+})
+
 describe('derive — endings', () => {
   it('reaches "contained" only when isolated and reporting as closed', () => {
     const st = derive(scenario, at(c('triage', { action: 1 }), c('contain', { isolate: true }), c('report', { action: 1 })))
@@ -113,6 +186,16 @@ describe('apply', () => {
 })
 
 describe('replay', () => {
+  it('renders a CRLF template exactly like its LF version', () => {
+    const crlf = {
+      ...scenario,
+      stages: scenario.stages.map((st) => ({ ...st, template: st.template.replace(/\n/g, '\r\n') })),
+      initialFiles: scenario.initialFiles.map((f) => ({ ...f, content: f.content.replace(/\n/g, '\r\n') })),
+    }
+    const p = at(c('triage', { action: 1 }))
+    expect(derive(crlf, p)).toEqual(derive(scenario, p))
+  })
+
   it('is deterministic: the same choices give the same state', () => {
     const p = at(c('triage', { action: 1 }), c('contain', { isolate: true }))
     expect(derive(scenario, p)).toEqual(derive(scenario, structuredClone(p)))
@@ -123,5 +206,7 @@ describe('replay', () => {
     expect(validPrefix(scenario, good)).toEqual(good)
     expect(validPrefix(scenario, [...good, c('missing', { action: 1 }), c('report', { action: 1 })])).toEqual(good)
     expect(validPrefix(scenario, [c('triage', { action: 7 }), ...good.slice(1)])).toEqual([])
+    // A field the scenario no longer has also stops the replay at that choice.
+    expect(validPrefix(scenario, [good[0], c('contain', { isolate: true, extra: 1 })])).toEqual([good[0]])
   })
 })

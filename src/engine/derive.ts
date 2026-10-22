@@ -69,7 +69,7 @@ function replay(scenario: Scenario, choices: Choice[]): Replay {
   }
 
   const files: Record<string, FileView> = {}
-  for (const f of scenario.initialFiles) files[f.path] = { text: f.content, valueSlots: [] }
+  for (const f of scenario.initialFiles) files[f.path] = { text: f.content.replace(/\r\n?/g, '\n'), valueSlots: [] }
   for (const stage of scenario.stages) {
     if (!unlocked.has(stage.filePath)) continue
     files[stage.filePath] = renderStage(

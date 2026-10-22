@@ -1,6 +1,6 @@
 # HANDOFF
 
-> 마지막 자가 검수: 2026-10-22 · 29줄
+> 마지막 자가 검수: 2026-10-22 · 31줄
 
 ## 현재 상태
 
@@ -21,9 +21,11 @@
 - `npm run lint`는 경고도 실패로 처리한다(`--deny-warnings`).
 - Monaco는 `monaco-editor/editor/editor.api`와 필요한 기능만 골라 import한다(`src/ui/editor/monaco.ts`). 기능(찾기, 자동완성 등)이 더 필요하면 그 파일에 contrib import를 추가한다. codicon CSS는 패키지 exports로 닿지 않아 `vite.config.ts`의 alias(`monaco-codicon.css`)로 가져온다.
 - `npm run build`가 메인 청크 500kB 초과 경고(약 3MB, gzip 약 780kB)를 낸다. 대부분 Monaco다. 실패는 아니며 P05에서 분할 여부를 본다.
+- 같은 브라우저에서 게임을 여러 탭으로 열면 마지막 저장이 이긴다(알려진 한계, 데이터 계약 §9). 테스트할 때 탭 하나로.
+- `.py` 템플릿은 LF(`.gitattributes`). 저장 형식이 깨져 있으면 복원이 안내 후 새 게임으로 시작한다(예외를 던지면 안 됨).
 - SoT 내용 변경은 Owner 합의가 있어야 한다. Owner가 위임한 판단의 결과도 합의로 본다(SoT §1).
 
 ## 다음 작업
 
-1. P03 독립 검증 → 통과하면 P03 Complete
+1. P03 재검증 → 통과하면 P03 Complete
 2. P04 시나리오 *Incident 02:14* ([`docs/phases/P04_incident_0214_scenario.md`](docs/phases/P04_incident_0214_scenario.md))

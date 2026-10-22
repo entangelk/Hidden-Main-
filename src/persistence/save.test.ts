@@ -53,6 +53,41 @@ describe('restore', () => {
     }
   })
 
+  it('treats valid JSON with a broken shape as corrupt instead of throwing (page must not go blank)', () => {
+    const base = JSON.parse(saved())
+    const broken = [
+      { ...base, progress: { choices: [null] } },
+      { ...base, progress: { choices: [{ sceneId: 'triage' }] } },
+      { ...base, progress: { choices: [{ sceneId: 1, values: {} }] } },
+      { ...base, progress: { choices: [{ sceneId: 'triage', values: { action: [1] } }] } },
+      { ...base, workspace: { openFiles: 'main.py', activeFile: 'main.py' } },
+      { ...base, workspace: { openFiles: [1], activeFile: null } },
+      { ...base, workspace: null },
+      { ...base, playerEdits: { report: { action: 2 } } },
+      { ...base, playerEdits: [] },
+      { ...base, scenarioVersion: '1' },
+      [],
+      42,
+    ]
+    for (const snap of broken) {
+      const r = restore(memory({ [key]: JSON.stringify(snap) }), scenario, fresh)
+      expect(r).toEqual({ progress: { choices: [] }, playerEdits: {}, workspace: fresh, notice: '저장된 진행을 읽을 수 없어 처음부터 시작합니다.' })
+    }
+  })
+
+  it('opens the start file when no saved tab survives (contract §8)', () => {
+    const raw = saved({ workspace: { openFiles: ['gone.py'], activeFile: 'gone.py' } })
+    expect(restore(memory({ [key]: raw }), scenario, fresh).workspace).toEqual(fresh)
+  })
+
+  it('a same-version save that no longer replays keeps the valid prefix with its own notice', () => {
+    const raw = saved({ progress: { choices: [c('triage', { action: 2 }), c('contain', { isolate: true, extra: 1 })] } })
+    const r = restore(memory({ [key]: raw }), scenario, fresh)
+    expect(r.progress.choices).toEqual([c('triage', { action: 2 })])
+    expect(r.playerEdits).toEqual({})
+    expect(r.notice).toBe('저장된 진행 일부를 읽을 수 없어 그 앞까지만 이어갑니다.')
+  })
+
   it('on a scenario version change keeps the replayable prefix, drops all edits, and cleans tabs', () => {
     const raw = saved({
       scenarioVersion: 0,

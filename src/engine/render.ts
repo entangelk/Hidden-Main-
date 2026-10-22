@@ -74,7 +74,8 @@ export function renderStage(
   reached: Map<SceneId, SceneRender>,
   currentSceneId: SceneId | null,
 ): FileView {
-  let text = stage.template
+  // Offsets and directives assume LF; a template saved with CRLF must render the same.
+  let text = stage.template.replace(/\r\n?/g, '\n')
 
   for (const scene of [...scenes].reverse()) {
     if (reached.has(scene.id)) continue
