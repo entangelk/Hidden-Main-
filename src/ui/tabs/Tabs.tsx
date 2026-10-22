@@ -14,26 +14,16 @@ export function Tabs({ openFiles, activeFile, dirtyFiles, onSelect, onClose }: P
           key={path}
           className={`tab${path === activeFile ? ' is-active' : ''}${dirtyFiles.has(path) ? ' is-dirty' : ''}`}
           title={path}
-          role="tab"
-          aria-selected={path === activeFile}
-          tabIndex={0}
-          onClick={() => onSelect(path)}
-          onKeyDown={(e) => {
-            if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
-              e.preventDefault()
-              onSelect(path)
-            }
-          }}
         >
-          <span>{path.split('/').pop()}</span>
           <button
-            className="tab-close"
-            aria-label={`Close ${path}`}
-            onClick={(e) => {
-              e.stopPropagation()
-              onClose(path)
-            }}
+            className="tab-label"
+            role="tab"
+            aria-selected={path === activeFile}
+            onClick={() => onSelect(path)}
           >
+            {path.split('/').pop()}
+          </button>
+          <button className="tab-close" aria-label={`Close ${path}`} onClick={() => onClose(path)}>
             <span className="tab-close-x">×</span>
             <span className="tab-dirty-dot">●</span>
           </button>

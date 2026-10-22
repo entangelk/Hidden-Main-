@@ -2,15 +2,17 @@ export type TreeNode =
   | { kind: 'folder'; name: string; path: string; children: TreeNode[] }
   | { kind: 'file'; name: string; path: string }
 
-// Folders first, then files; each group sorted by name, case-insensitive. The locale is pinned
-// so the order does not depend on the machine running it.
+// Folders first, then files; each group sorted by name, case-insensitive, with names that differ
+// only in case ordered by code unit. The locale is pinned so the order does not depend on the
+// machine running it.
 function sortNodes(nodes: TreeNode[]): TreeNode[] {
   return nodes.sort((a, b) =>
     a.kind !== b.kind
       ? a.kind === 'folder'
         ? -1
         : 1
-      : a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }),
+      : a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }) ||
+        (a.name < b.name ? -1 : a.name > b.name ? 1 : 0),
   )
 }
 

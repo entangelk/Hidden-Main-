@@ -13,8 +13,6 @@ export function CodeEditor({ files, activeFile, onDirtyChange, onRun }: Props) {
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
   const modelsRef = useRef(new Map<string, monaco.editor.ITextModel>())
   const viewStatesRef = useRef(new Map<string, monaco.editor.ICodeEditorViewState | null>())
-  // Content each model was created from (or last reset to); the dirty marker compares against it.
-  const originalsRef = useRef(new Map<string, string>())
   const shownPathRef = useRef<string | null>(null)
   // Latest callbacks, so the editor created once never calls stale closures.
   const callbacksRef = useRef({ onDirtyChange, onRun })
@@ -36,13 +34,11 @@ export function CodeEditor({ files, activeFile, onDirtyChange, onRun }: Props) {
     editorRef.current = editor
     const models = modelsRef.current
     const viewStates = viewStatesRef.current
-    const originals = originalsRef.current
     return () => {
       editor.dispose()
       for (const model of models.values()) model.dispose()
       models.clear()
       viewStates.clear()
-      originals.clear()
       shownPathRef.current = null
       editorRef.current = null
     }
@@ -51,6 +47,7 @@ export function CodeEditor({ files, activeFile, onDirtyChange, onRun }: Props) {
   useEffect(() => {
     const editor = editorRef.current
     if (!editor) return
+    const pathChanged = shownPathRef.current !== activeFile
     if (shownPathRef.current) viewStatesRef.current.set(shownPathRef.current, editor.saveViewState())
     shownPathRef.current = activeFile
     if (!activeFile) {
@@ -59,13 +56,10 @@ export function CodeEditor({ files, activeFile, onDirtyChange, onRun }: Props) {
     }
     let model = modelsRef.current.get(activeFile)
     if (!model) {
-      const created = monaco.editor.createModel(files[activeFile], 'python', monaco.Uri.file(activeFile))
-      originalsRef.current.set(activeFile, files[activeFile])
+      const original = files[activeFile]
+      const created = monaco.editor.createModel(original, 'python', monaco.Uri.file(activeFile))
       created.onDidChangeContent(() =>
-        callbacksRef.current.onDirtyChange(
-          activeFile,
-          created.getValue() !== originalsRef.current.get(activeFile),
-        ),
+        callbacksRef.current.onDirtyChange(activeFile, created.getValue() !== original),
       )
       modelsRef.current.set(activeFile, created)
       model = created
@@ -73,19 +67,8 @@ export function CodeEditor({ files, activeFile, onDirtyChange, onRun }: Props) {
     editor.setModel(model)
     const viewState = viewStatesRef.current.get(activeFile)
     if (viewState) editor.restoreViewState(viewState)
-    editor.focus()
+    if (pathChanged) editor.focus()
   }, [activeFile, files])
-
-  // When a file's source content changes (P02+: the engine supplies new text), reset its model.
-  // This discards in-memory edits for that file; how edits survive is the DB-02 value-slot flow.
-  useEffect(() => {
-    for (const [path, model] of modelsRef.current) {
-      const next = files[path]
-      if (next === undefined || next === originalsRef.current.get(path)) continue
-      originalsRef.current.set(path, next)
-      model.setValue(next)
-    }
-  }, [files])
 
   return <div className="code-editor" ref={containerRef} />
 }

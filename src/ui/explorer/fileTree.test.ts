@@ -35,10 +35,24 @@ describe('buildFileTree', () => {
     })
   })
 
-  it('sorts names case-insensitively with a fixed locale (order does not depend on the machine)', () => {
-    // Raw code-unit order would put 'B.py' first ('B' < 'a').
+  it('sorts names case-insensitively (code-unit order would put B.py first)', () => {
     const tree = buildFileTree(['B.py', 'c.py', 'a.py'])
     expect(tree.map((n) => n.name)).toEqual(['a.py', 'B.py', 'c.py'])
+  })
+
+  it('sorts with English collation (Lithuanian would put y.py before j.py)', () => {
+    const tree = buildFileTree(['y.py', 'j.py', 'i.py'])
+    expect(tree.map((n) => n.name)).toEqual(['i.py', 'j.py', 'y.py'])
+  })
+
+  it('orders names differing only in case the same way regardless of input order', () => {
+    expect(buildFileTree(['b.py', 'B.py']).map((n) => n.name)).toEqual(['B.py', 'b.py'])
+    expect(buildFileTree(['B.py', 'b.py']).map((n) => n.name)).toEqual(['B.py', 'b.py'])
+  })
+
+  it('keeps folders whose names differ only in case separate (paths are case-sensitive)', () => {
+    const tree = buildFileTree(['A/x.py', 'a/y.py'])
+    expect(tree.map((n) => n.path)).toEqual(['A', 'a'])
   })
 
   it('collapses an exact duplicate path into one node', () => {
