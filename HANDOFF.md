@@ -1,12 +1,12 @@
 # HANDOFF
 
-> 마지막 자가 검수: 2026-10-22 · 31줄
+> 마지막 자가 검수: 2026-10-22 · 30줄
 
 ## 현재 상태
 
 - 제품 기준: [`docs/SOT.md`](docs/SOT.md) v0.5 (우선순위 트리는 SoT §1). 미결 Owner 결정 없음.
 - 아키텍처: [`docs/architecture/`](docs/architecture/)
-- 페이즈: [`docs/phases/00_index.md`](docs/phases/00_index.md) — P01·P02 완료, **P03 (데이터 기반 스토리 엔진 + 저장) 진행 중 — 독립 검증 대기**
+- 페이즈: [`docs/phases/00_index.md`](docs/phases/00_index.md) — P01~P03 완료, **다음은 P04 (시나리오 *Incident 02:14*)**
 - 코드 구성:
   - `src/engine/`: 순수 로직 — `types.ts`(계약 정본), `parser.ts`(`parse`·`readLiteral`·`formatLiteral`·`valuesFit`), `slots.ts`(함수 블록·값 슬롯·`shiftSlots`·`applyEdits`), `condition.ts`(`holds`), `render.ts`(사건 함수 공개·주석 변형 `# @if`), `derive.ts`(`derive`·`apply`·`validPrefix` — `choices` 재생).
   - `src/scenario/mini/`: 2스테이지·엔딩 2개 소형 시나리오. 테스트와 앱이 함께 쓴다. P04에서 앱은 `incident-0214`로 바뀌고 mini는 테스트용으로 남는다.
@@ -27,5 +27,4 @@
 
 ## 다음 작업
 
-1. P03 재검증 → 통과하면 P03 Complete
-2. P04 시나리오 *Incident 02:14* ([`docs/phases/P04_incident_0214_scenario.md`](docs/phases/P04_incident_0214_scenario.md))
+1. P04 시나리오 *Incident 02:14* ([`docs/phases/P04_incident_0214_scenario.md`](docs/phases/P04_incident_0214_scenario.md))

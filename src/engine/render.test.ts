@@ -38,5 +38,7 @@ describe('resolveVariants', () => {
     expect(() => resolveVariants('# @else', {})).toThrow('@else without @if')
     expect(() => resolveVariants('# @end', {})).toThrow('@end without @if')
     expect(() => resolveVariants('# @if a == 1', {})).toThrow('Unclosed')
+    expect(() => resolveVariants('# @if a == 1\n# @else a == 2\n# @end', {})).toThrow('takes no arguments')
+    expect(() => resolveVariants('# @if a == 1\n# @end now', {})).toThrow('takes no arguments')
   })
 })

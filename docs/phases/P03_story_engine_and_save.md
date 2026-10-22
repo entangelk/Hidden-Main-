@@ -1,6 +1,6 @@
 # P03 — 데이터 기반 스토리 엔진 + 저장
 
-**상태:** In Progress · [인덱스](00_index.md)
+**상태:** Complete (검증: `docs/verifications/2026-10-22/p03_engine_and_save*.md`) · [인덱스](00_index.md)
 
 ## 목표
 

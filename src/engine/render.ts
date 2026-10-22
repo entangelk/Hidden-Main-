@@ -34,6 +34,8 @@ export function resolveVariants(text: string, flags: Record<string, Value>): str
     if (kind === 'if') {
       if (state !== 'outside') throw new Error(`Nested @if: ${line.trim()}`)
       state = holds([parseIf(args, line)], {}, flags) ? 'taken' : 'skipped'
+    } else if (args.trim() !== '') {
+      throw new Error(`@${kind} takes no arguments: ${line.trim()}`)
     } else if (kind === 'else') {
       if (state !== 'taken' && state !== 'skipped') throw new Error(`@else without @if: ${line.trim()}`)
       state = state === 'taken' ? 'else-skipped' : 'else-taken'

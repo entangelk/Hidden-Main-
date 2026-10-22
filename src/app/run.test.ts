@@ -48,6 +48,17 @@ describe('runScene', () => {
     expect(again.progress?.choices.map((c) => c.sceneId)).toEqual(['triage', 'contain'])
   })
 
+  it('changes nothing when the engine refuses a value the parser accepted (no transition matches)', () => {
+    const stuck = {
+      ...scenario,
+      scenes: scenario.scenes.map((s) =>
+        s.id === 'triage' ? { ...s, transitions: s.transitions.filter((t) => t.when.length > 0) } : s,
+      ),
+    }
+    // action 3 parses (allowed option) but only the default transition handled it; without it apply refuses.
+    expect(runScene(stuck, start, { triage: { action: '3' } }, 'main.py')).toEqual({ lines: [] })
+  })
+
   it('after an ending only prints a notice', () => {
     let p = start as { choices: { sceneId: string; values: Record<string, number | boolean | string> }[] }
     p = runScene(scenario, p, {}, 'main.py').progress!

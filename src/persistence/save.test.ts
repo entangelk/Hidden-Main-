@@ -75,6 +75,24 @@ describe('restore', () => {
     }
   })
 
+  it('accepts what the app itself writes: empty edits, no open tab, null active file (round trip)', () => {
+    const own = snapshot(scenario, { choices: twoSteps }, {}, { openFiles: [], activeFile: null }, new Date())
+    const r = restore(memory({ [key]: JSON.stringify(own) }), scenario, fresh)
+    expect(r.notice).toBeUndefined()
+    expect(r.progress.choices).toEqual(twoSteps)
+    expect(r.playerEdits).toEqual({})
+    expect(r.workspace).toEqual(fresh) // nothing open → the start file
+    const fresh0 = snapshot(scenario, { choices: [] }, {}, fresh, new Date())
+    expect(restore(memory({ [key]: JSON.stringify(fresh0) }), scenario, fresh).notice).toBeUndefined()
+  })
+
+  it('accepts decimal values in the shape check (they are valid number-field values)', () => {
+    const raw = saved({ progress: { choices: [c('triage', { action: 2 }), c('contain', { isolate: 0.5 })] } })
+    const r = restore(memory({ [key]: raw }), scenario, fresh)
+    expect(r.notice).not.toContain('처음부터') // not treated as corrupt; replay stops at the bad value instead
+    expect(r.progress.choices).toEqual([c('triage', { action: 2 })])
+  })
+
   it('opens the start file when no saved tab survives (contract §8)', () => {
     const raw = saved({ workspace: { openFiles: ['gone.py'], activeFile: 'gone.py' } })
     expect(restore(memory({ [key]: raw }), scenario, fresh).workspace).toEqual(fresh)
@@ -114,6 +132,7 @@ describe('cleanWorkspace', () => {
     expect(cleanWorkspace({ openFiles: ['a', 'x', 'b'], activeFile: 'x' }, ['a', 'b'])).toEqual({ openFiles: ['a', 'b'], activeFile: 'a' })
     expect(cleanWorkspace({ openFiles: ['a', 'b'], activeFile: 'b' }, ['a', 'b'])).toEqual({ openFiles: ['a', 'b'], activeFile: 'b' })
     expect(cleanWorkspace({ openFiles: ['x'], activeFile: 'x' }, ['a'])).toEqual({ openFiles: [], activeFile: null })
+    expect(cleanWorkspace({ openFiles: ['a', 'a'], activeFile: 'a' }, ['a'])).toEqual({ openFiles: ['a'], activeFile: 'a' })
   })
 })
 

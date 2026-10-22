@@ -32,7 +32,7 @@ export type Restored = {
 
 /** Drops tabs for files that are not visible (data contract §8). */
 export function cleanWorkspace(workspace: WorkspaceView, visibleFiles: string[]): WorkspaceView {
-  const openFiles = workspace.openFiles.filter((f) => visibleFiles.includes(f))
+  const openFiles = [...new Set(workspace.openFiles)].filter((f) => visibleFiles.includes(f))
   const activeFile =
     workspace.activeFile && openFiles.includes(workspace.activeFile) ? workspace.activeFile : (openFiles[0] ?? null)
   return { openFiles, activeFile }
