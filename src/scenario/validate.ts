@@ -1,5 +1,6 @@
 // Authoring checks for a scenario (P04 scope, architecture §5.1/§6.1, data contract §3).
 // Used by tests; returns human-readable problems instead of throwing so one run lists them all.
+import { holds } from '../engine/condition'
 import { derive } from '../engine/derive'
 import { parse } from '../engine/parser'
 import { findValueSlots, functionBlock } from '../engine/slots'
@@ -20,7 +21,9 @@ function candidates(field: EditableField, scene: Scene): Value[] {
       const edges = scene.transitions.flatMap((t) =>
         t.when.flatMap((c) => ('choice' in c.ref && c.ref.choice === field.name && typeof c.value === 'number' ? [c.value] : [])),
       )
-      return [...new Set([field.min, field.max, ...edges])].filter((v) => v >= field.min && v <= field.max)
+      // Each edge and its neighbours, so ==, !=, >= and <= branches all get a value on each side.
+      const near = edges.flatMap((e) => [e - 1, e, e + 1])
+      return [...new Set([field.min, field.max, ...near])].filter((v) => v >= field.min && v <= field.max)
     }
   }
 }
@@ -32,7 +35,42 @@ function product(fields: EditableField[], scene: Scene): Record<string, Value>[]
   )
 }
 
-export type Exploration = { endings: Set<string>; reachedScenes: Set<string>; states: number }
+export type Exploration = {
+  endings: Set<string>
+  reachedScenes: Set<string>
+  /** `${sceneId}#${index}` of every transition taken on some path. */
+  firedTransitions: Set<string>
+  states: number
+}
+
+/** Option explanations the player must see on screen for the current scene (R-07). */
+function optionProblems(scene: Scene, shownText: string): string[] {
+  const block = functionBlock(shownText, scene.functionName)
+  if (!block) return []
+  const comments = shownText
+    .slice(block[0], block[1])
+    .split('\n')
+    .filter((l) => l.trim().startsWith('#'))
+    .join('\n')
+  const problems: string[] = []
+  for (const f of scene.editableFields) {
+    if (f.type === 'int') {
+      const listed = [...comments.matchAll(/^ *#\s+(\d+)\.\s/gm)].map((m) => Number(m[1]))
+      const min = Math.min(...f.options)
+      const max = Math.max(...f.options)
+      const contiguous = f.options.length === max - min + 1
+      const asRange = contiguous && comments.includes(`${min}~${max}`)
+      if (!asRange && listed.join(',') !== f.options.join(',')) {
+        problems.push(`${scene.id}.${f.name}: comment options [${listed}] ≠ field options [${f.options}]`)
+      }
+    }
+    if (f.type === 'string') {
+      for (const o of f.options) if (!comments.includes(`"${o}"`)) problems.push(`${scene.id}.${f.name}: option "${o}" not explained in comments`)
+    }
+    if (f.type === 'number' && !comments.includes(`${f.min}~${f.max}`)) problems.push(`${scene.id}.${f.name}: range ${f.min}~${f.max} not explained in comments`)
+  }
+  return problems
+}
 
 /**
  * Plays every distinct path (states deduplicated by current scene + flags) and checks each
@@ -42,6 +80,8 @@ export function explore(scenario: Scenario, problems: string[]): Exploration {
   const scenes = new Map(scenario.scenes.map((s) => [s.id, s]))
   const endings = new Set<string>()
   const reachedScenes = new Set<string>()
+  const firedTransitions = new Set<string>()
+  const reported = new Set<string>()
   const seen = new Set<string>()
   const queue: Choice[][] = [[]]
   while (queue.length) {
@@ -65,9 +105,18 @@ export function explore(scenario: Scenario, problems: string[]): Exploration {
     seen.add(key)
     const scene = scenes.get(state.currentSceneId!)!
     reachedScenes.add(scene.id)
-    for (const values of product(scene.editableFields, scene)) queue.push([...choices, { sceneId: scene.id, values }])
+    const file = scenario.stages.find((st) => st.id === scene.stageId)!.filePath
+    for (const problem of optionProblems(scene, state.files[file].text)) {
+      if (!reported.has(problem)) problems.push(problem)
+      reported.add(problem)
+    }
+    for (const values of product(scene.editableFields, scene)) {
+      const fired = scene.transitions.findIndex((t) => holds(t.when, values, state.flags))
+      if (fired >= 0) firedTransitions.add(`${scene.id}#${fired}`)
+      queue.push([...choices, { sceneId: scene.id, values }])
+    }
   }
-  return { endings, reachedScenes, states: seen.size }
+  return { endings, reachedScenes, firedTransitions, states: seen.size }
 }
 
 /** Static checks of data and templates. */
@@ -105,16 +154,6 @@ export function staticProblems(scenario: Scenario): string[] {
     if (slots.length !== scene.editableFields.length) problems.push(`${scene.id}: a field has no literal slot (default must be a plain literal)`)
     const defaults = Object.fromEntries(slots.map((s) => [s.field, s.defaultLiteral]))
     if (!parse(scene.id, scene.editableFields, defaults).ok) problems.push(`${scene.id}: template default is not a valid value`)
-    const comments = body.split('\n').filter((l) => l.trim().startsWith('#')).join('\n')
-    for (const f of scene.editableFields) {
-      if (f.type === 'int') {
-        const listed = [...comments.matchAll(/^ *#\s+(\d+)\.\s/gm)].map((m) => Number(m[1]))
-        if (listed.join(',') !== f.options.join(',')) problems.push(`${scene.id}.${f.name}: comment options [${listed}] ≠ field options [${f.options}]`)
-      }
-      if (f.type === 'string') {
-        for (const o of f.options) if (!comments.includes(`"${o}"`)) problems.push(`${scene.id}.${f.name}: option "${o}" not explained in comments`)
-      }
-    }
     const last = scene.transitions.at(-1)
     if (!last || last.when.length) problems.push(`${scene.id}: last transition must have an empty condition`)
     for (const t of scene.transitions) {
@@ -143,6 +182,19 @@ export function staticProblems(scenario: Scenario): string[] {
     return cyclic
   }
   if (scenario.scenes.some((s) => visit(s.id))) problems.push('transition graph has a cycle')
+
+  // Dead content: a comment variant on a flag nothing sets, or a flag nothing reads.
+  const setFlags = new Set(scenario.scenes.flatMap((s) => s.transitions.flatMap((t) => t.effects.map((e) => e.flag))))
+  const readFlags = new Set(
+    scenario.scenes.flatMap((s) => s.transitions.flatMap((t) => t.when.flatMap((c) => ('flag' in c.ref ? [c.ref.flag] : [])))),
+  )
+  for (const st of scenario.stages) {
+    for (const m of st.template.matchAll(/^ *# @if ([A-Za-z_]\w*)/gm)) {
+      readFlags.add(m[1])
+      if (!setFlags.has(m[1])) problems.push(`${st.filePath}: @if on flag "${m[1]}" that no transition sets`)
+    }
+  }
+  for (const f of setFlags) if (!readFlags.has(f)) problems.push(`flag "${f}" is set but never read`)
   return problems
 }
 
@@ -152,5 +204,12 @@ export function validateScenario(scenario: Scenario): { problems: string[]; expl
   const exploration = explore(scenario, problems)
   for (const s of scenario.scenes) if (!exploration.reachedScenes.has(s.id)) problems.push(`${s.id}: unreachable`)
   for (const e of scenario.endings) if (!exploration.endings.has(e.id)) problems.push(`ending ${e.id}: unreachable`)
+  for (const s of scenario.scenes) {
+    s.transitions.forEach((_, i) => {
+      if (exploration.reachedScenes.has(s.id) && !exploration.firedTransitions.has(`${s.id}#${i}`)) {
+        problems.push(`${s.id}: transition ${i} can never be taken`)
+      }
+    })
+  }
   return { problems, exploration }
 }

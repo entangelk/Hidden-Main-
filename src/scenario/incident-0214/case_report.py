@@ -14,8 +14,11 @@ class CaseReport:
         # @else
         # 03:00에 로그가 지워져 근거 자료가 없다.
         # @end
+        # @if documented == True
+        # 장치 사진 12장과 일련번호가 첨부된다.
+        # @end
         #
-        # 보고서에 무엇을 쓸지 고른다.
+        # 보고서에 무엇을 쓸지 골라 action 값을 바꾼다.
         #   1. 확인한 사실을 그대로 쓴다.
         #   2. "일시적 네트워크 장애"로 정리한다.
 
@@ -25,3 +28,17 @@ class CaseReport:
 
         return reporting.draft(case_id, action)
 
+    def submit_report(self):
+        # @if unplugged == True
+        # BACKUP-02는 전원이 꺼진 채 B2-07에 남아 있다.
+        # @end
+        # 보고서를 받을 곳을 recipient 값에 넣는다. 큰따옴표까지 그대로 쓴다.
+        #   "security" - 보안팀 (조사 권한이 있다)
+        #   "facility" - 시설팀 (B2 관리 책임이 있다)
+        #   "archive"  - 사건 기록 보관함 (아무도 읽지 않는다)
+
+        priority = "normal"
+
+        recipient = "archive"
+
+        return reporting.submit(recipient, priority)

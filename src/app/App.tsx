@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { derive } from '../engine/derive'
-import { applyEdits } from '../engine/slots'
-import type { FileView, LogLine, PlayerEdits, Progress, SceneId } from '../engine/types'
+import type { LogLine, PlayerEdits, Progress, SceneId } from '../engine/types'
 import { createSaver, restore, saveKey, snapshot, type KeyValueStore, type WorkspaceView } from '../persistence/save'
 import { incident0214 } from '../scenario/incident-0214'
 import { CodeEditor } from '../ui/editor/CodeEditor'
@@ -49,12 +48,6 @@ export default function App() {
   )
 
   const state = useMemo(() => derive(scenario, progress), [progress])
-  const views = useMemo(() => {
-    const out: Record<string, FileView> = {}
-    for (const [path, view] of Object.entries(state.files)) out[path] = applyEdits(view, edits)
-    return out
-  }, [state, edits])
-
   // A file is modified while its current scene holds a value different from the template's.
   const dirtyFiles = useMemo(() => {
     const dirty = new Set<string>()
@@ -157,7 +150,7 @@ export default function App() {
           onSelect={setActiveFile}
           onClose={close}
         />
-        <CodeEditor views={views} activeFile={activeFile} onEdit={onEdit} onRun={run} />
+        <CodeEditor files={state.files} edits={edits} activeFile={activeFile} onEdit={onEdit} onRun={run} />
         <Terminal lines={terminalLines} />
       </main>
       <StatusBar activeFile={activeFile} />

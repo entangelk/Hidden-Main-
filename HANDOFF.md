@@ -9,7 +9,7 @@
 - 페이즈: [`docs/phases/00_index.md`](docs/phases/00_index.md) — P01~P03 완료, **P04 (시나리오 *Incident 02:14*) 진행 중 — 독립 검증 대기**
 - 코드 구성:
   - `src/engine/`: 순수 로직 — `types.ts`(계약 정본), `parser.ts`(`parse`·`readLiteral`·`formatLiteral`·`valuesFit`), `slots.ts`(함수 블록·값 슬롯·`shiftSlots`·`applyEdits`), `condition.ts`(`holds`), `render.ts`(사건 함수 공개·주석 변형 `# @if`), `derive.ts`(`derive`·`apply`·`validPrefix` — `choices` 재생).
-  - `src/scenario/incident-0214/`: 앱이 쓰는 본 시나리오(5스테이지·사건 12개·엔딩 2개). 줄거리·전이표는 `docs/scenario/incident-0214.md`.
+  - `src/scenario/incident-0214/`: 앱이 쓰는 본 시나리오(5스테이지·사건 13개·엔딩 2개). 줄거리·전이표는 `docs/scenario/incident-0214.md`.
   - `src/scenario/mini/`: 엔진 테스트용 소형 시나리오.
   - `src/scenario/validate.ts`: 시나리오 작성 규칙 검사 + 모든 상태 탐색(테스트에서 사용). 시나리오를 고치면 `npm test`가 이것으로 막는다.
   - `src/persistence/save.ts`: 저장 형식(`SaveSnapshot`), `restore`(손상·버전 불일치·저장소 차단 처리), 디바운스 저장기. 키 `incident-workspace:save:<시나리오 id>`.
