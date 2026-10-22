@@ -14,8 +14,9 @@ export default defineConfig({
   base: './',
   plugins: [react()],
   build: {
-    // One chunk on purpose: the editor (Monaco) is needed on the first screen, so splitting it off
-    // would only add a second round trip. About 3 MB raw / 0.8 MB gzip.
+    // The main chunk keeps Monaco on purpose: the editor is needed on the first screen, so splitting
+    // it off would only add a round trip. About 3 MB raw / 0.8 MB gzip. (Monaco's Python grammar
+    // and its editor worker are already separate files, loaded on demand.)
     chunkSizeWarningLimit: 3500,
   },
   resolve: {

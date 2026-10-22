@@ -4,7 +4,7 @@
 
 ## 현재 상태
 
-- 제품 기준: [`docs/SOT.md`](docs/SOT.md) v0.5 (우선순위 트리는 SoT §1). 미결 Owner 결정 없음.
+- 제품 기준: [`docs/SOT.md`](docs/SOT.md) v0.6 (우선순위 트리는 SoT §1). 미결 Owner 결정 없음.
 - 아키텍처: [`docs/architecture/`](docs/architecture/)
 - 페이즈: [`docs/phases/00_index.md`](docs/phases/00_index.md) — P01~P04 완료, **P05 (완성도 개선 + 배포) 진행 중**
 - 코드 구성:

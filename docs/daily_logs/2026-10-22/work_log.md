@@ -312,6 +312,16 @@
 - R-07(비개발자가 주석만 보고 진행)도 사람 관찰이 필요해 Owner 플레이 테스트로 남김.
 - 배포 URL 확인은 아직 못 함: 워크플로는 `main` 푸시에서 돌고, Pages 설정(Source: GitHub Actions)이 필요함. 작업 브랜치를 `main`에 합치는 것과 Pages 설정은 Owner 몫.
 
+### 29. P05 배포 준비 독립 검증과 보강
+
+- 검증 기록: `docs/verifications/2026-10-22/p05_release_prep.md` (판정: 조건부 합격 — HANDOFF의 SoT 버전 표기만 조건, 병합해 배포해도 된다는 의견). 깨끗한 복사본에서 `npm ci` 성공, `/Hidden-Main-/` 하위 경로에서 두 엔딩·새로고침 복원·폰트 로드 확인, AC-04~08 재현.
+- B1: HANDOFF의 SoT 버전을 v0.6으로.
+- H1: 워크플로 액션을 최신 메이저로 올림(checkout v7, setup-node v7, configure-pages v6, upload-pages-artifact v5, deploy-pages v5 — 모두 Node 24 런타임, 각 태그의 `action.yml`로 확인). 이전 버전은 Node 20 런타임이라 러너에서 지원이 끊길 수 있었음.
+- H2: 수동 실행은 `main`에서만 된다는 점을 워크플로 주석에 적음.
+- H3: `monaco-editor` 0.57이 고정한 `dompurify` 3.4.15에 critical 보안 권고 → `package.json` `overrides`로 패치 릴리스 3.4.17 사용, `npm audit` 0건.
+- H4: SoT v0.6 로그 행에 §7도 표기. H5: 번들 주석에 Python 문법·워커는 별도 파일임을 명시.
+- 검증: lint·test(119)·build 통과, 하위 경로 두 엔딩 자동 플레이 재확인.
+
 ## 발견한 문제
 
 | 문제 | 원인 | 처리 | 결과 |
