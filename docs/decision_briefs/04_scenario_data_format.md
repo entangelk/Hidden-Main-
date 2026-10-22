@@ -5,7 +5,7 @@
 
 ## 결정이 필요한 것
 
-ideation §5는 스토리 데이터를 "JSON / TypeScript 객체"로 둘 다 적어 두었다. 시나리오 구조(Stage, Scene, 전이, 조건)를 어떤 형식으로 작성할지 정해야 한다. `.py` 템플릿 원문은 어느 경우든 별도 파일로 둔다([아키텍처 §7](../architecture/00_overview.md#7-디렉터리-구조-예정)).
+ideation §5는 스토리 데이터를 "JSON / TypeScript 객체"로 둘 다 적어 두었다. 시나리오 구조(Stage, Scene, 전이, 조건)를 어떤 형식으로 작성할지 정해야 한다. `.py` 템플릿 원문은 어느 경우든 별도 파일로 둔다([아키텍처 §7](../architecture/00_overview.md#7-디렉터리-구조)).
 
 ## 선택지
 
