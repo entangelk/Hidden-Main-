@@ -1,6 +1,6 @@
 # P04 — 시나리오 *Incident 02:14*
 
-**상태:** In Progress · [인덱스](00_index.md)
+**상태:** Complete — 사람이 해야 하는 두 기준(AC-10 플레이 시간, R-07 비개발자 관찰)은 P05 점검표로 이월 (검증: `docs/verifications/2026-10-22/p04_scenario*.md`) · [인덱스](00_index.md)
 
 ## 목표
 

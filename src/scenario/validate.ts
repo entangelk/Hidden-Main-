@@ -113,10 +113,13 @@ export function explore(scenario: Scenario, problems: string[]): Exploration {
     const file = stage.filePath
     // The scene was just reached, so the current flags are the ones its comment variants use.
     const block = functionBlock(stage.template, scene.functionName)
-    for (const line of block ? stage.template.slice(block[0], block[1]).split('\n') : []) {
+    const lines = block ? stage.template.slice(block[0], block[1]).split('\n') : []
+    for (const [i, line] of lines.entries()) {
       const d = DIRECTIVE.exec(line)
       if (!d || d[1] !== 'if') continue
-      const key = `${scene.id}: ${line.trim()}`
+      const end = lines.findIndex((l, j) => j > i && /^ *# @end\b/.test(l))
+      const hasElse = lines.slice(i + 1, end).some((l) => /^ *# @else\b/.test(l))
+      const key = `${scene.id}: ${line.trim()}${hasElse ? ' [else]' : ''}`
       const seen = variantOutcomes.get(key) ?? new Set<boolean>()
       seen.add(holds([parseIf(d[2], line)], {}, state.flags))
       variantOutcomes.set(key, seen)
@@ -220,7 +223,10 @@ export function validateScenario(scenario: Scenario): { problems: string[]; expl
   for (const s of scenario.scenes) if (!exploration.reachedScenes.has(s.id)) problems.push(`${s.id}: unreachable`)
   for (const e of scenario.endings) if (!exploration.endings.has(e.id)) problems.push(`ending ${e.id}: unreachable`)
   for (const [directive, outcomes] of exploration.variantOutcomes) {
-    if (!outcomes.has(true)) problems.push(`${directive} is never true when the scene is reached`)
+    if (!outcomes.has(true)) problems.push(`${directive.replace(' [else]', '')} is never true when the scene is reached`)
+    if (directive.endsWith(' [else]') && !outcomes.has(false)) {
+      problems.push(`${directive.replace(' [else]', '')} is never false, so its @else is never shown`)
+    }
   }
   for (const s of scenario.scenes) {
     s.transitions.forEach((_, i) => {

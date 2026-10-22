@@ -85,13 +85,17 @@ export function CodeEditor({ files, edits, revision, activeFile, onEdit, onRun }
     const editor = editorRef.current
     if (!editor) return
 
+    // setValue also clears the undo history, so the player cannot undo into a solved value. The
+    // shown model keeps its cursor and scroll.
     const write = (model: monaco.editor.ITextModel, text: string) => {
+      const shown = editor.getModel() === model ? editor.saveViewState() : null
       writingRef.current = true
       try {
         model.setValue(text)
       } finally {
         writingRef.current = false
       }
+      if (shown) editor.restoreViewState(shown)
     }
 
     const paint = (model: monaco.editor.ITextModel) =>
@@ -118,8 +122,9 @@ export function CodeEditor({ files, edits, revision, activeFile, onEdit, onRun }
       const key = `${revision}\n${base?.text}`
       if (!base || baseRef.current.get(path) === key) continue
       baseRef.current.set(path, key)
-      const shown = applyEdits(base, edits)
-      if (model.getValue() !== shown.text) write(model, shown.text)
+      // Rewritten even when the text already matches (solved with the engine's own spelling): the
+      // undo history must not reach back past the solve (architecture §6.2).
+      write(model, applyEdits(base, edits).text)
       engineChanged.add(path)
       revealRef.current.add(path)
     }

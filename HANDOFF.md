@@ -6,7 +6,7 @@
 
 - 제품 기준: [`docs/SOT.md`](docs/SOT.md) v0.5 (우선순위 트리는 SoT §1). 미결 Owner 결정 없음.
 - 아키텍처: [`docs/architecture/`](docs/architecture/)
-- 페이즈: [`docs/phases/00_index.md`](docs/phases/00_index.md) — P01~P03 완료, **P04 (시나리오 *Incident 02:14*) 진행 중 — 독립 검증 대기**
+- 페이즈: [`docs/phases/00_index.md`](docs/phases/00_index.md) — P01~P04 완료, **다음은 P05 (완성도 개선 + 배포)**
 - 코드 구성:
   - `src/engine/`: 순수 로직 — `types.ts`(계약 정본), `parser.ts`(`parse`·`readLiteral`·`formatLiteral`·`valuesFit`), `slots.ts`(함수 블록·값 슬롯·`shiftSlots`·`applyEdits`), `condition.ts`(`holds`), `render.ts`(사건 함수 공개·주석 변형 `# @if`), `derive.ts`(`derive`·`apply`·`validPrefix` — `choices` 재생).
   - `src/scenario/incident-0214/`: 앱이 쓰는 본 시나리오(5스테이지·사건 13개·엔딩 2개). 줄거리·전이표는 `docs/scenario/incident-0214.md`.
@@ -29,6 +29,6 @@
 
 ## 다음 작업
 
-1. P04 독립 검증 → 지적 반영
-2. P04 남은 완료 기준: 처음 하는 사람의 플레이 시간 10~20분 측정(AC-10), 비개발자가 주석만 보고 진행하는지 관찰(R-07) — 사람이 해야 하므로 Owner 몫
-3. P05 완성도 개선 + 배포
+1. P05 시작 전 Owner 결정: 배포할 정적 호스팅(GitHub Pages·Netlify·Cloudflare Pages 등)
+2. Owner 플레이 테스트: 처음 하는 사람 10~20분(AC-10), 비개발자가 주석만 보고 진행하는지(R-07) — P05 점검표 항목
+3. P05 나머지: AC-01~10 점검표, 번들 크기(약 3MB) 검토, 배포

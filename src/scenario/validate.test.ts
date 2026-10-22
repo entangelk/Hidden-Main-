@@ -16,7 +16,7 @@ describe('validateScenario', () => {
     expect(problems).toEqual([])
     expect([...exploration.endings].sort()).toEqual(['resolved', 'sealed'])
     expect(exploration.reachedScenes.size).toBe(incident0214.scenes.length)
-    // Exhaustive play grows with every flag; keep an eye on it (about 11.5k states at version 3).
+    // Exhaustive play grows with every flag; keep an eye on it (8,650 states at version 3).
     expect(exploration.states).toBeLessThan(20_000)
   }, 60_000) // exhaustive play over every distinct (scene, flags) state takes a few seconds
 
@@ -73,6 +73,12 @@ describe('validateScenario', () => {
       s.scenes[1].transitions[0].effects = [{ flag: 'isolated', value: true }]
     }, 'contain.isolate: range 0~9 not explained in comments'],
     ['comment variant that is never true', (s) => (s.stages[1].template = s.stages[1].template.replace('@if isolated == True', '@if isolated == False')), 'report: # @if isolated == False is never true when the scene is reached'],
+    ['missing start scene', (s) => (s.startSceneId = 'nowhere'), 'start scene nowhere missing'],
+    ['scene not listed in its stage', (s) => (s.stages[0].sceneIds = ['triage']), 'contain: not listed in its stage'],
+    ['@else that is never shown', (s) => {
+      // contain's variant reads `analyzed`; make every triage choice set it, so the @else never shows.
+      s.scenes[0].transitions.forEach((t) => (t.effects = [{ flag: 'analyzed', value: true }]))
+    }, 'contain: # @if analyzed == True is never false, so its @else is never shown'],
     [
       'transition never taken',
       (s) => s.scenes[1].transitions.unshift({ when: [{ ref: { choice: 'isolate' }, op: '==', value: 'yes' }], effects: [], log: [], next: { scene: 'report' } }),
