@@ -1,6 +1,6 @@
 # P01 — IDE 셸
 
-**상태:** In Progress · [인덱스](00_index.md)
+**상태:** Complete (검증: `docs/verifications/2026-10-22/p01_ide_shell*.md`) · [인덱스](00_index.md)
 
 ## 목표
 

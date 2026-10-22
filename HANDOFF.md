@@ -1,12 +1,12 @@
 # HANDOFF
 
-> 마지막 자가 검수: 2026-10-22 · 24줄
+> 마지막 자가 검수: 2026-10-22 · 23줄
 
 ## 현재 상태
 
 - 제품 기준: [`docs/SOT.md`](docs/SOT.md) v0.5 (우선순위 트리는 SoT §1). 미결 Owner 결정 없음.
 - 아키텍처: [`docs/architecture/`](docs/architecture/)
-- 페이즈: [`docs/phases/00_index.md`](docs/phases/00_index.md) — **P01 (IDE 셸) 진행 중**
+- 페이즈: [`docs/phases/00_index.md`](docs/phases/00_index.md) — P01 완료, **다음은 P02 (핵심 루프 프로토타입)**
 - 코드: IDE 레이아웃까지 있음. `src/app/App.tsx`가 탭·활성 파일 상태를 들고 `src/ui/`의 Explorer·Tabs·Terminal·StatusBar를 조립. 편집기는 `src/ui/editor/`의 Monaco(파일별 모델, 편집 내용은 메모리에만). `Ctrl/Cmd+Enter`는 P01 연결 확인용으로 `$ python <활성 파일>`(열린 탭이 없으면 `$ python`)만 출력(P02에서 엔진 실행으로 교체). Monaco 모델은 파일별로 처음 열 때 한 번 만들고, 원본 내용이 바뀌어도 따라가지 않는다 — P02에서 엔진이 파일 내용을 바꾸게 되면 이 부분을 손봐야 한다. 파일 목록은 임시 `src/app/sampleFiles.ts`(P02에서 시나리오 데이터로 교체).
 - 명령: `npm run dev` / `npm run build` / `npm run lint` / `npm test`
 
@@ -20,5 +20,4 @@
 
 ## 다음 작업
 
-1. P01 2차 재검증 → 통과하면 P01 Complete
-2. P02 핵심 루프 프로토타입
+1. P02 핵심 루프 프로토타입 ([`docs/phases/P02_core_loop_prototype.md`](docs/phases/P02_core_loop_prototype.md))

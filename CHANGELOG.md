@@ -2,7 +2,14 @@
 
 | 날짜 | 변경 | 상세 |
 | --- | --- | --- |
+| 2026-10-22 | P01 IDE 셸 완료 (Monaco 편집기, Explorer, 탭, Terminal, Status Bar) | [작업 로그](docs/daily_logs/2026-10-22/work_log.md) |
 | 2026-10-22 | 초기 SoT v0.1, 아키텍처 초안, 페이즈 P01~P05, 결정 브리프 DB-01~04 작성 → DB-01~04 해결(SoT v0.2), P01 프로젝트 골격 | [작업 로그](docs/daily_logs/2026-10-22/work_log.md) |
+
+## 2026-10-22 — P01 IDE 셸
+
+- VS Code 스타일 화면: Explorer(키보드 트리 탐색), 탭(● 수정 표시), Terminal, Status Bar
+- Monaco 편집기를 로컬 번들로 연결(Python 문법 강조, 접기), `Ctrl/Cmd+Enter` 연결 확인용 출력
+- 독립 검증 3회(모두 합격) 지적 사항 반영
 
 ## 2026-10-22 — 프로젝트 문서 기반 구축
 
