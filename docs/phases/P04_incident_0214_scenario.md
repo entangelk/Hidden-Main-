@@ -9,7 +9,7 @@
 ## 선행 조건
 
 - P03 산출물: 시나리오 계약, 엔진, 저장
-- [DB-01](../decision_briefs/01_mvp_dynamic_content_scope.md) 해결 (분기 연출에 쓸 수 있는 수단이 정해져야 함)
+- 분기 연출 수단은 [DB-01](../decision_briefs/01_mvp_dynamic_content_scope.md)(B)로 정해짐: 새 사건 주석·로그 변형, 전이, 엔딩
 
 ## 범위
 
@@ -30,8 +30,8 @@
 ## 병행 가능 작업 / 제외
 
 - 병행 가능: P05의 단축키·편집 UX 개선
-- 제외: 히든 엔딩, 추가 시나리오, DB-01에서 제외된 동적 연출
+- 제외: 히든 엔딩, 추가 시나리오, 기존 파일 소급 변경·숨겨진 파일/함수(P1)
 
 ## 관련 결정 브리프
 
-- [DB-01](../decision_briefs/01_mvp_dynamic_content_scope.md) (차단)
+- [DB-01](../decision_briefs/01_mvp_dynamic_content_scope.md) (해결됨)

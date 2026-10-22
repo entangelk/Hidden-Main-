@@ -1,6 +1,6 @@
 # DB-04 — 시나리오 데이터 형식
 
-**상태:** Open
+**상태:** Resolved
 **관련 페이즈:** [P03](../phases/P03_story_engine_and_save.md)
 
 ## 결정이 필요한 것
@@ -30,4 +30,4 @@ ideation §5는 스토리 데이터를 "JSON / TypeScript 객체"로 둘 다 적
 
 ## 결정
 
-(미정)
+**B** 선택 — 2026-10-22, Owner. 시나리오 구조는 TypeScript 객체(`satisfies Scenario`)로 작성하고, 함수나 클로저 없이 순수 데이터만 쓴다. 근거: 권장안 이유와 같음. 상태: Resolved.

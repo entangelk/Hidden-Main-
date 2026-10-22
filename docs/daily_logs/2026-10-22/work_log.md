@@ -37,6 +37,18 @@
 
 - 파일: `HANDOFF.md`, `CHANGELOG.md`, 이 작업 로그
 
+### 6. P01 1단계 — 프로젝트 골격
+
+- 파일: `package.json`, `package-lock.json`, `index.html`, `tsconfig*.json`, `vite.config.ts`, `.gitignore`, `.oxlintrc.json`, `src/main.tsx`, `src/index.css`, `src/app/App.tsx`
+- 주요 내용: `npm create vite` react-ts 템플릿 설정을 기준으로 데모 자산은 빼고 구성. Vitest 추가(`src/**/*.test.ts`), `tsconfig.app.json`에 `strict` 추가, 진입 컴포넌트를 아키텍처 디렉터리 구조에 맞춰 `src/app/`에 둠. 페이지 제목은 게임처럼 보이지 않도록 `incident-workspace`(R-01).
+- 검증: `npm run build` 성공, `npm run lint` 종료 코드 0, `vitest run --passWithNoTests` 실행 확인(테스트 파일 없음).
+- P01을 3단계(골격 → IDE 레이아웃 → Monaco·단축키)로 나눠 진행. Owner 선호에 따라 단계마다 다음 진행 여부를 확인받음.
+
+### 7. 결정 브리프 DB-01~04 해결 반영
+
+- 파일: `docs/decision_briefs/01`~`04`, `docs/SOT.md`(v0.2), `docs/architecture/*`, `docs/phases/*`
+- 주요 내용: SoT §3.2(값만 편집), §3.3(사건 함수 순차 추가), §3.4(선택 영향 범위), §7(TS 객체 시나리오) 확정. 데이터 계약 `PlayerEdits`를 사건→필드→원문 리터럴로 확정. P02·P03 상태를 Planned로 변경.
+
 ## 발견한 문제
 
 | 문제 | 원인 | 처리 | 결과 |
@@ -46,12 +58,19 @@
 | 파일 안 다음 사건 함수 노출 방식 미정 | ideation §2.3에 서술 없음 | DB-03로 분리 | Owner 결정 대기 |
 | 시나리오 데이터 형식 미정 | ideation §5에 "JSON / TypeScript 객체" 병기 | DB-04로 분리 | Owner 결정 대기 |
 
+(위 네 건은 같은 날 Owner가 모두 권장안 B로 결정 — 아래 "결정" 참고)
+
 ## 결정
 
-- 별도 Owner 결정은 아직 없음. 문서 구조와 우선순위 트리는 작업자 제안이며, 아키텍처 문서는 "v0.1 초안"으로 표시함.
+- **Owner 결정: DB-01~04 모두 권장안 B 채택.** Owner가 "결정이 필요한 것들 모두 권장안으로 하자"고 지시.
+  - DB-01 B: 새로 열리는 사건의 주석·로그만 이전 선택에 따라 변형. 기존 파일 소급 변경·숨겨진 파일/함수는 P1. 트레이드오프: ideation §4.4 연출은 v0.1에서 빠짐.
+  - DB-02 B: 지정 변수 값만 편집, 나머지 읽기 전용. 트레이드오프: Monaco에 범위별 읽기 전용이 없어 직접 구현 필요.
+  - DB-03 B: 사건 해결 시 다음 함수를 파일 아래에 추가. 해결된 함수 값은 고정.
+  - DB-04 B: 시나리오는 TS 객체(순수 데이터). 외부 로딩(P1) 때 JSON 경로 추가 필요.
+- 문서 구조와 우선순위 트리는 작업자 제안이며 Owner가 이의 없이 다음 단계를 진행시킴. 아키텍처 문서의 `choices` 재생 설계는 아직 명시적 검토 전.
 - 작업 가정: 실행 단축키는 `Ctrl+Enter`와 macOS `Cmd+Enter`를 함께 지원 (SoT §8).
 
 ## 다음 단계
 
-1. Owner에게 DB-01~04 결정 요청
-2. P01 착수 (결정과 무관하게 시작 가능)
+1. P01 2단계: IDE 레이아웃 (Owner 확인 후)
+2. P01 3단계: Monaco 연결·단축키

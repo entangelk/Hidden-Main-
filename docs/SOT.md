@@ -1,6 +1,6 @@
 # Source of Truth — Incident Workspace (가칭)
 
-> 현재 버전: **v0.1 (초안)** · 최종 수정: 2026-10-22
+> 현재 버전: **v0.2** · 최종 수정: 2026-10-22
 > 이 문서는 제품 요구사항의 단일 기준(SoT)이다. 원천 기획은 [`plan/ideation.md`](plan/ideation.md)이며, 이 문서는 그 기획에서 **확정된 것**, **미결인 것**, **문서 간 우선순위**를 정리한다.
 
 ---
@@ -66,6 +66,22 @@
 
 조건식 수정과 다중 변수 조합 선택은 P1(확장)이다.
 
+### 3.2 편집 모델 ([DB-02](decision_briefs/02_editing_model.md) 확정)
+
+- 플레이어는 지정 변수의 **값 부분만** 편집할 수 있다. 나머지 코드와 주석은 읽기 전용이다.
+- 읽기 전용 영역에서의 입력은 무시된다. 게임 전용 경고 팝업은 띄우지 않는다(R-01).
+
+### 3.3 파일 안 사건 진행 ([DB-03](decision_briefs/03_scene_reveal_in_file.md) 확정)
+
+- 스테이지 파일을 처음 열면 첫 사건 함수만 보인다.
+- 사건을 해결할 때마다 파일 아래쪽에 다음 사건 함수가 추가된다. 실행 대상은 항상 가장 마지막 함수다.
+- 해결한 함수의 지정 값은 해결 당시 값으로 고정되며 다시 실행할 수 없다.
+
+### 3.4 선택의 영향 범위 (MVP, [DB-01](decision_briefs/01_mvp_dynamic_content_scope.md) 확정)
+
+- 이전 선택(플래그)에 따라 **새로 열리는 사건**의 주석과 Terminal 로그, 이후 전이와 엔딩이 달라진다.
+- 이미 열린 파일의 소급 변경과 숨겨진 파일/함수는 P1이다.
+
 ---
 
 ## 4. 화면 구성 (확정)
@@ -96,7 +112,7 @@ VS Code를 연상시키는 다크 테마. MVP에서는 게임 진행에 필요�
 ### 5.2 P1 — 확장 (MVP 제외)
 
 조건식 수정 분기, 다중 변수 조합 선택, 복수 챕터·폴더 생성, 사용자 선택 이력 UI, 되돌리기, 추가 시나리오 로딩, 히든 엔딩.
-*숨겨진 파일·함수*와 *기존 파일 내용 변경*의 MVP 포함 여부는 미결 — [DB-01](decision_briefs/01_mvp_dynamic_content_scope.md).
+숨겨진 파일·함수, 진행에 따른 기존 파일 내용 변경도 P1이다 ([DB-01](decision_briefs/01_mvp_dynamic_content_scope.md)).
 
 ### 5.3 P2 — 장기 (MVP 제외)
 
@@ -139,20 +155,15 @@ VS Code를 연상시키는 다크 테마. MVP에서는 게임 진행에 필요�
 
 ## 7. 기술 스택 (확정)
 
-React + TypeScript, Vite, Monaco Editor, CSS, localStorage 저장, 정적 웹 호스팅. 게임 로직은 모두 브라우저에서 처리한다. 상세 구조는 [`architecture/00_overview.md`](architecture/00_overview.md).
+React + TypeScript, Vite, Monaco Editor, CSS, localStorage 저장, 정적 웹 호스팅. 시나리오 데이터는 TypeScript 객체로 작성한다 ([DB-04](decision_briefs/04_scenario_data_format.md)). 게임 로직은 모두 브라우저에서 처리한다. 상세 구조는 [`architecture/00_overview.md`](architecture/00_overview.md).
 
 ---
 
 ## 8. 미결 사항
 
-| ID | 내용 | 막는 페이즈 |
-| --- | --- | --- |
-| [DB-01](decision_briefs/01_mvp_dynamic_content_scope.md) | 기존 파일 변경·숨겨진 파일/함수의 MVP 포함 여부 (ideation §4.3·§4.4 ↔ §7.2 충돌) | P03, P04 |
-| [DB-02](decision_briefs/02_editing_model.md) | 편집 모델: 파일 전체 자유 편집 vs 지정 값만 편집 | P02 |
-| [DB-03](decision_briefs/03_scene_reveal_in_file.md) | 한 파일 안에서 다음 사건 함수가 드러나는 방식 | P03 |
-| [DB-04](decision_briefs/04_scenario_data_format.md) | 시나리오 데이터 형식 (JSON vs TypeScript 객체) | P03 |
+미결 Owner 결정 없음. DB-01~04는 모두 해결되었고 §3.2~3.4, §5.2, §7에 반영했다.
 
-결정 전까지의 작업 가정:
+작업 가정 (Owner 확인 전):
 
 - 실행 단축키는 Windows/Linux `Ctrl+Enter`, macOS `Cmd+Enter`를 함께 지원한다(Monaco `CtrlCmd`). ideation에 명시는 없으나 R-07에 맞춘 가정이다.
 - 배포 호스트(정적 호스팅 서비스 선택)는 P05에서 정한다.
@@ -164,3 +175,4 @@ React + TypeScript, Vite, Monaco Editor, CSS, localStorage 저장, 정적 웹 �
 | 버전 | 날짜 | 변경 | 근거 |
 | --- | --- | --- | --- |
 | v0.1 | 2026-10-22 | `plan/ideation.md` v0.1에서 초기 SoT 작성. 우선순위 트리 정의, 미결 사항 DB-01~04 분리 | [작업 로그](daily_logs/2026-10-22/work_log.md) |
+| v0.2 | 2026-10-22 | DB-01~04 모두 B로 해결: 편집 모델(§3.2), 사건 노출(§3.3), 선택 영향 범위(§3.4), 시나리오 형식(§7) 확정 | [작업 로그](daily_logs/2026-10-22/work_log.md) |

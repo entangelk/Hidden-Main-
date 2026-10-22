@@ -1,6 +1,6 @@
 # P01 — IDE 셸
 
-**상태:** Planned · [인덱스](00_index.md)
+**상태:** In Progress · [인덱스](00_index.md)
 
 ## 목표
 
@@ -30,9 +30,8 @@
 
 ## 병행 가능 작업 / 제외
 
-- 병행 가능: DB-02~04에 대한 Owner 결정
 - 제외: 값 파싱, 게임 상태, 저장, 시나리오 내용, 게임 전용 UI 일체 (R-01)
 
 ## 관련 결정 브리프
 
-없음. 단, DB-02 결과에 따라 P02에서 편집 제한 기능을 추가하므로 Monaco 래퍼는 `ui/editor/` 한 곳에 모아 둔다.
+없음. P02에서 [DB-02](../decision_briefs/02_editing_model.md)(값만 편집) 제한을 붙이므로 Monaco 래퍼는 `ui/editor/` 한 곳에 모아 둔다.

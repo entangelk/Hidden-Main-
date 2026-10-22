@@ -37,7 +37,7 @@ type Scenario = {
 type Stage = {
   id: StageId;
   filePath: string;           // 예: "incidents/security_audit.py"
-  template: string;           // .py 원문 (?raw import)
+  template: string;           // .py 원문 (?raw import). 사건 함수 블록 단위로 나뉘어 진행에 따라 추가됨 (DB-03)
   sceneIds: SceneId[];        // 파일 안 사건 순서
   unlock: Condition;          // 해금 조건
 };
@@ -64,9 +64,9 @@ type Transition = {
 };
 ```
 
-- `description`(ideation)은 별도 필드로 두지 않는다. 주석은 `template` 안에 이미 있는 텍스트이므로 같은 이야기를 두 곳에 쓰지 않는다. 선택에 따른 주석 변형은 템플릿 안의 표시 블록 + 조건으로 표현한다(범위는 DB-01).
+- `description`(ideation)은 별도 필드로 두지 않는다. 주석은 `template` 안에 이미 있는 텍스트이므로 같은 이야기를 두 곳에 쓰지 않는다. 선택에 따른 주석 변형은 템플릿 안의 표시 블록 + 조건으로 표현한다. MVP 범위는 새로 추가되는 사건 함수에 한정한다(DB-01).
 - 기본값(`action = 1` 같은 초기 값)도 템플릿 텍스트가 정본이다. `EditableField`에 기본값을 따로 두지 않는다.
-- 시나리오 형식(TS 객체 vs JSON)은 DB-04에서 정한다. 위 모양은 형식과 무관하다.
+- 시나리오는 위 타입의 TypeScript 객체로 작성하고, 함수·클로저 없이 순수 데이터만 쓴다(DB-04).
 
 ---
 
@@ -119,12 +119,15 @@ type DerivedState = {
 
 ## 5. 플레이어 편집 계약
 
-DB-02 결과에 따라 둘 중 하나가 된다.
+DB-02(B): 플레이어는 지정 변수의 값만 편집한다.
 
-| DB-02 | 모양 | 비고 |
-| --- | --- | --- |
-| A/C (전체 자유 편집) | `Record<filePath, string>` — 파일 전체 텍스트 | 스토리 오버레이와 병합 규칙 필요 |
-| B (지정 값만 편집) | `Record<SceneId, Record<fieldName, string>>` — 필드별 원문 리터럴 | 화면 텍스트는 매번 `render`로 재구성, 충돌 없음 |
+```ts
+type PlayerEdits = Record<SceneId, Record<string, string>>;  // 사건 → 필드명 → 편집 중인 원문 리터럴
+```
+
+- 원문 리터럴(예: `"2"`, `"True"`)을 그대로 둔다. 해석·검증은 실행 시 parser가 한다.
+- 화면 텍스트는 매번 `render`로 재구성하므로 스토리 오버레이와 충돌하지 않는다.
+- 해결된 사건의 값은 `Progress.choices`에서 오므로 `PlayerEdits`에서 지운다(DB-03 고정 표시).
 
 - 어느 쪽이든 편집 내용은 **아직 실행되지 않은 입력**이다. 실행이 성공해야만 `Progress`에 들어간다. 편집 자체가 진행 상태를 바꾸지 않는다.
 
