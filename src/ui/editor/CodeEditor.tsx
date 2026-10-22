@@ -1,23 +1,30 @@
 import { useEffect, useRef } from 'react'
+import type { FileView, SceneId, ValueSlot } from '../../engine/types'
+import { acceptChange } from './acceptChange'
 import { monaco } from './monaco'
 
 type Props = {
-  files: Record<string, string>
+  views: Record<string, FileView>
   activeFile: string | null
-  onDirtyChange: (path: string, dirty: boolean) => void
+  onEdit: (sceneId: SceneId, field: string, literal: string) => void
   onRun: () => void
 }
 
-export function CodeEditor({ files, activeFile, onDirtyChange, onRun }: Props) {
+export function CodeEditor({ views, activeFile, onEdit, onRun }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
+  const decorationsRef = useRef<monaco.editor.IEditorDecorationsCollection | null>(null)
   const modelsRef = useRef(new Map<string, monaco.editor.ITextModel>())
   const viewStatesRef = useRef(new Map<string, monaco.editor.ICodeEditorViewState | null>())
   const shownPathRef = useRef<string | null>(null)
+  // Slots of the shown file. Updated right after an accepted edit, before React re-renders.
+  const slotsRef = useRef<ValueSlot[]>([])
+  // Set while this component itself changes a model, so its change handler ignores the event.
+  const writingRef = useRef(false)
   // Latest callbacks, so the editor created once never calls stale closures.
-  const callbacksRef = useRef({ onDirtyChange, onRun })
+  const callbacksRef = useRef({ onEdit, onRun })
   useEffect(() => {
-    callbacksRef.current = { onDirtyChange, onRun }
+    callbacksRef.current = { onEdit, onRun }
   })
 
   useEffect(() => {
@@ -32,6 +39,7 @@ export function CodeEditor({ files, activeFile, onDirtyChange, onRun }: Props) {
     })
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => callbacksRef.current.onRun())
     editorRef.current = editor
+    decorationsRef.current = editor.createDecorationsCollection()
     const models = modelsRef.current
     const viewStates = viewStatesRef.current
     return () => {
@@ -41,34 +49,99 @@ export function CodeEditor({ files, activeFile, onDirtyChange, onRun }: Props) {
       viewStates.clear()
       shownPathRef.current = null
       editorRef.current = null
+      decorationsRef.current = null
     }
   }, [])
 
   useEffect(() => {
     const editor = editorRef.current
     if (!editor) return
+
+    const write = (model: monaco.editor.ITextModel, text: string) => {
+      writingRef.current = true
+      try {
+        model.setValue(text)
+      } finally {
+        writingRef.current = false
+      }
+    }
+
+    // Follow engine-side content changes (a scene solved, a value fixed). When the model already
+    // holds the text — the player's own accepted edit — it is left alone so cursor and undo survive.
+    for (const [path, model] of modelsRef.current) {
+      const view = views[path]
+      if (view && model.getValue() !== view.text) write(model, view.text)
+    }
+
     const pathChanged = shownPathRef.current !== activeFile
-    if (shownPathRef.current) viewStatesRef.current.set(shownPathRef.current, editor.saveViewState())
+    if (pathChanged && shownPathRef.current) {
+      viewStatesRef.current.set(shownPathRef.current, editor.saveViewState())
+    }
     shownPathRef.current = activeFile
-    if (!activeFile) {
+    const view = activeFile ? views[activeFile] : undefined
+    if (!activeFile || !view) {
       editor.setModel(null)
+      slotsRef.current = []
       return
     }
+
     let model = modelsRef.current.get(activeFile)
     if (!model) {
-      const original = files[activeFile]
-      const created = monaco.editor.createModel(original, 'python', monaco.Uri.file(activeFile))
-      created.onDidChangeContent(() =>
-        callbacksRef.current.onDirtyChange(activeFile, created.getValue() !== original),
-      )
+      const created = monaco.editor.createModel(view.text, 'python', monaco.Uri.file(activeFile))
+      created.onDidChangeContent((e) => {
+        if (writingRef.current) return
+        const change = e.changes.length === 1 ? e.changes[0] : null
+        const index = change
+          ? acceptChange(slotsRef.current, {
+              start: change.rangeOffset,
+              end: change.rangeOffset + change.rangeLength,
+              text: change.text,
+            })
+          : -1
+        if (!change || index === -1) {
+          // DB-02: only literal values are editable. Undo exactly this change; every accepted
+          // change closes its own undo element, so nothing else is reverted.
+          queueMicrotask(() => {
+            writingRef.current = true
+            try {
+              created.undo()
+            } finally {
+              writingRef.current = false
+            }
+          })
+          return
+        }
+        created.pushStackElement()
+        const delta = change.text.length - change.rangeLength
+        const slots = slotsRef.current.map((s, i) =>
+          i < index ? s : i === index ? { ...s, end: s.end + delta } : { ...s, start: s.start + delta, end: s.end + delta },
+        )
+        slotsRef.current = slots
+        const slot = slots[index]
+        callbacksRef.current.onEdit(slot.sceneId, slot.field, created.getValue().slice(slot.start, slot.end))
+      })
       modelsRef.current.set(activeFile, created)
       model = created
     }
-    editor.setModel(model)
-    const viewState = viewStatesRef.current.get(activeFile)
-    if (viewState) editor.restoreViewState(viewState)
-    if (pathChanged) editor.focus()
-  }, [activeFile, files])
+
+    if (pathChanged) {
+      editor.setModel(model)
+      const viewState = viewStatesRef.current.get(activeFile)
+      if (viewState) editor.restoreViewState(viewState)
+      editor.focus()
+    }
+    slotsRef.current = view.valueSlots
+    decorationsRef.current?.set(
+      view.valueSlots.map((s) => {
+        const from = model.getPositionAt(s.start)
+        const to = model.getPositionAt(s.end)
+        return {
+          range: new monaco.Range(from.lineNumber, from.column, to.lineNumber, to.column),
+          options: { inlineClassName: 'value-slot', stickiness: monaco.editor.TrackedRangeStickiness.AlwaysGrowsWhenTypingAtEdges },
+        }
+      }),
+    )
+  }, [activeFile, views])
 
   return <div className="code-editor" ref={containerRef} />
 }

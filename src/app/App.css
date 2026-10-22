@@ -172,3 +172,9 @@
   display: flex;
   gap: 16px;
 }
+
+/* Editable value of the current scene (DB-02): a quiet dotted underline, no game-like marker. */
+.value-slot {
+  text-decoration: underline dotted #4fc1ff;
+  text-underline-offset: 3px;
+}

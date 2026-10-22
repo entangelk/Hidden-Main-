@@ -161,6 +161,19 @@
 - N2: 16번 S3의 Tab 정지점 대체 순서 설명을 코드와 일치시킴.
 - 남은 지적이 테스트 한 건과 문구 한 건이라 별도 재검증 없이 위 변이 확인으로 마무리.
 
+### 18. P02 핵심 루프 프로토타입 구현
+
+- 파일: `src/engine/types.ts`, `src/engine/parser.ts`(+test), `src/engine/slots.ts`(+test), `src/ui/editor/acceptChange.ts`(+test), `src/ui/editor/CodeEditor.tsx`, `src/app/prototype.ts`(+test), `src/app/prototype/main.py`, `src/app/prototype/event_002.py`, `src/app/terminalMessages.ts`, `src/app/App.tsx`, `src/app/App.css`. `src/app/sampleFiles.ts` 삭제.
+- 주요 내용:
+  - parser: 정수·실수·`True`/`False`·따옴표 문자열 리터럴 해석, 필드 타입·허용값 검증, 오류는 필드마다 모두 보고. `formatLiteral`로 해결된 값을 리터럴로 다시 씀.
+  - 값 슬롯: 함수 블록(들여쓰기 기준) 안의 `필드명 = 리터럴` 줄만 인식(주석·다른 함수·모듈 수준 제외), `applyEdits`로 편집 값 반영과 뒤 슬롯 이동. P03 범위였던 슬롯 계산을 P02에서 먼저 구현(편집 제한에 필요).
+  - 편집 제한: 거부한 변경은 실행 취소 한 번으로 되돌림. 수락한 변경마다 실행 취소 단위를 닫아, 되돌릴 때 다른 편집이 함께 사라지지 않게 함. 값 영역은 점선 밑줄로 표시.
+  - 실행: 현재 사건 없음 → 안내, 다른 탭 → 실행할 파일 안내, 검증 실패 → `Traceback` 형식 오류(줄 번호 포함), 성공 → 결과 로그 + `[workspace] event_002.py 생성됨` + Explorer에 파일 추가. 해결된 함수의 값은 고정되고 더 편집할 수 없음.
+  - 탭 ●는 현재 사건 값이 템플릿 기본값과 다를 때 표시.
+- 발견·수정한 문제: 키 입력 직후 바로 `Ctrl+Enter`를 누르면 React 재렌더 전이라 실행이 이전 편집 값을 읽음(브라우저 자동 테스트에서 재현: `2`를 입력하고 실행했는데 "입력: 없음" 오류). → App이 편집 값을 ref에 즉시 기록하고 실행 시 그것을 읽도록 수정, 재현 시나리오 통과.
+- 검증: `npm test` 42개 통과(parser·슬롯·`applyEdits`·`acceptChange`·프로토타입 파생 — 과소/과잉 엄격 양방향 포함), build·lint 통과. Playwright: 처음엔 `main.py`만 있음, 값 영역 밖 입력·여러 줄 붙여넣기 되돌림, 거부 후 실행 취소가 직전 수락 편집 하나만 되돌림, `4` 실행 시 ValueError와 상태 불변(Explorer 그대로), `2` 실행 시 결과 로그·`event_002.py` 생성·`main.py` 값 고정, 해결된 값 편집 불가, 다른 탭 실행 시 안내 한 줄, `event_002.py` 실행 후 "처리할 사건이 없습니다.", 콘솔 오류 없음.
+- 독립 검증을 서브에이전트로 요청.
+
 ## 발견한 문제
 
 | 문제 | 원인 | 처리 | 결과 |
@@ -193,4 +206,5 @@
 
 ## 다음 단계
 
-1. P02 핵심 루프 프로토타입
+1. P02 독립 검증 → 지적 반영 → 통과 시 P02 Complete
+2. P03 데이터 기반 스토리 엔진 + 저장
