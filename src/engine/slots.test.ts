@@ -111,6 +111,14 @@ describe('applyEdits', () => {
     expect(out.text.slice(out.valueSlots[1].start, out.valueSlots[1].end)).toBe('"A"')
   })
 
+  it('applies edits to two slots at once, each in the right place', () => {
+    const out = applyEdits(view, { s1: { action: '123', target: '"BB"' } })
+    const [action, target] = out.valueSlots
+    expect(out.text.slice(action.start, action.end)).toBe('123')
+    expect(out.text.slice(target.start, target.end)).toBe('"BB"')
+    expect(out.text).toContain('        action = 123  # choose\n        target = "BB"\n')
+  })
+
   it('ignores edits for other scenes', () => {
     expect(applyEdits(view, { other: { action: '2' } })).toEqual(view)
   })

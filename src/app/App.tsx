@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { parse } from '../engine/parser'
 import { applyEdits } from '../engine/slots'
 import type { Choice, FileView, PlayerEdits, SceneId } from '../engine/types'
 import { CodeEditor } from '../ui/editor/CodeEditor'
@@ -8,10 +7,8 @@ import { StatusBar } from '../ui/statusbar/StatusBar'
 import { Tabs } from '../ui/tabs/Tabs'
 import { Terminal } from '../ui/terminal/Terminal'
 import { derivePrototype } from './prototype'
-import { parseErrorLine } from './terminalMessages'
+import { runPrototype } from './runPrototype'
 import './App.css'
-
-const lineOf = (text: string, offset: number) => text.slice(0, offset).split('\n').length
 
 export default function App() {
   const [choices, setChoices] = useState<Choice[]>([])
@@ -54,54 +51,15 @@ export default function App() {
     [updateEdits],
   )
 
-  // Architecture §3: every early exit only prints; state changes happen after validation passes.
   const run = useCallback(() => {
-    const print = (...lines: string[]) => setTerminalLines((prev) => [...prev, ...lines])
-    const choices = choicesRef.current
-    const state = derivePrototype(choices)
-    const scene = state.currentScene
-    if (!scene) {
-      print('처리할 사건이 없습니다.')
-      return
-    }
-    if (activeFile !== scene.file) {
-      print(`실행할 파일: ${scene.file}${activeFile ? ` (현재 탭: ${activeFile})` : ''}`)
-      return
-    }
-    const edits = editsRef.current
-    const view = state.views[scene.file]
-    const literals = Object.fromEntries(
-      view.valueSlots.map((s) => [s.field, edits[scene.id]?.[s.field] ?? s.defaultLiteral]),
-    )
-    const result = parse(scene.id, scene.editableFields, literals)
-    if (!result.ok) {
-      const shown = applyEdits(view, edits)
-      print(
-        `$ python ${scene.file}`,
-        'Traceback (most recent call last):',
-        ...result.errors.flatMap((error) => {
-          const slot = shown.valueSlots.find((s) => s.field === error.field)
-          const field = scene.editableFields.find((f) => f.name === error.field)!
-          return [
-            `  File "${scene.file}", line ${slot ? lineOf(shown.text, slot.start) : '?'}, in ${scene.functionName}`,
-            parseErrorLine(error, field),
-          ]
-        }),
-      )
-      return
-    }
-    const next = derivePrototype([...choices, result.choice])
-    const created = next.unlockedFiles.filter((f) => !state.unlockedFiles.includes(f))
-    print(
-      `$ python ${scene.file}`,
-      ...scene.outcomes[result.choice.values.action as number],
-      ...created.map((f) => `[workspace] ${f} 생성됨`),
-    )
-    choicesRef.current = [...choices, result.choice]
+    const { lines, choice } = runPrototype(choicesRef.current, editsRef.current, activeFile)
+    setTerminalLines((prev) => [...prev, ...lines])
+    if (!choice) return
+    choicesRef.current = [...choicesRef.current, choice]
     setChoices(choicesRef.current)
     updateEdits((prev) => {
       const rest = { ...prev }
-      delete rest[scene.id]
+      delete rest[choice.sceneId]
       return rest
     })
   }, [activeFile, updateEdits])

@@ -4,7 +4,7 @@ import type { EditableField } from './types'
 
 const action: EditableField = { name: 'action', type: 'int', options: [1, 2, 3] }
 
-describe('parseChoice', () => {
+describe('parse', () => {
   it('accepts every allowed option (over-strict guard: valid values are never rejected)', () => {
     for (const raw of ['1', '2', ' 3 ']) {
       const r = parse('s', [action], { action: raw })
@@ -91,6 +91,7 @@ describe('formatLiteral', () => {
       expect(lit?.value).toEqual(v)
     }
     expect(formatLiteral(true)).toBe('True')
+    expect(formatLiteral('a\nb\tc')).toBe(String.raw`"a\nb\tc"`)
     expect(formatLiteral('A')).toBe('"A"')
   })
 })
