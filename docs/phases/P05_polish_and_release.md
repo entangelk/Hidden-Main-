@@ -1,6 +1,6 @@
 # P05 — 완성도 개선 + 배포
 
-**상태:** Planned · [인덱스](00_index.md)
+**상태:** In Progress · [인덱스](00_index.md)
 
 ## 목표
 
@@ -16,7 +16,7 @@
 - Editor 입력·단축키 다듬기, 파일 생성 동작 다듬기 (R-05 범위 안에서)
 - 코드·주석 가독성 개선
 - 저장·복원 회귀 확인
-- 정적 호스팅 선택 및 배포 (후보: GitHub Pages, Netlify, Cloudflare Pages — 이 페이즈 시작 시 Owner와 정함)
+- 정적 호스팅 선택 및 배포 → Owner 결정(2026-10-22): **GitHub Pages**. `main` 푸시 시 `.github/workflows/deploy.yml`이 lint·test·build 후 배포. 빌드는 상대 경로(`base: './'`)라 `/<저장소>/` 하위 경로에서 동작
 - 외부 플레이 테스트 1회 이상, 피드백 반영 — P04에서 이월된 AC-10(처음 하는 사람 10~20분) 측정과 R-07(비개발자가 주석만 보고 진행) 관찰을 여기서 함
 
 ## 완료 기준

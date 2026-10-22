@@ -1,6 +1,6 @@
 # Source of Truth — Incident Workspace (가칭)
 
-> 현재 버전: **v0.5** · 최종 수정: 2026-10-22
+> 현재 버전: **v0.6** · 최종 수정: 2026-10-22
 > 이 문서는 제품 요구사항의 단일 기준(SoT)이다. 원천 기획은 [`plan/ideation.md`](plan/ideation.md)이며, 이 문서는 그 기획에서 **확정된 것**, **미결인 것**, **문서 간 우선순위**를 정리한다.
 
 ---
@@ -169,7 +169,7 @@ VS Code를 연상시키는 다크 테마. MVP에서는 게임 진행에 필요�
 
 ## 7. 기술 스택 (확정)
 
-React + TypeScript, Vite, Monaco Editor, CSS, localStorage 저장, 정적 웹 호스팅. 시나리오 데이터는 TypeScript 객체로 작성한다 ([DB-04](decision_briefs/04_scenario_data_format.md)). 게임 로직은 모두 브라우저에서 처리한다. 상세 구조는 [`architecture/00_overview.md`](architecture/00_overview.md).
+React + TypeScript, Vite, Monaco Editor, CSS, localStorage 저장, 정적 웹 호스팅(GitHub Pages). 시나리오 데이터는 TypeScript 객체로 작성한다 ([DB-04](decision_briefs/04_scenario_data_format.md)). 게임 로직은 모두 브라우저에서 처리한다. 상세 구조는 [`architecture/00_overview.md`](architecture/00_overview.md).
 
 ---
 
@@ -177,9 +177,7 @@ React + TypeScript, Vite, Monaco Editor, CSS, localStorage 저장, 정적 웹 �
 
 미결 Owner 결정 없음. DB-01~04 결정은 §3.2~3.4, §5.2, §7에, Owner 합의 사항은 §1, §3.5, §3.6에 반영했다.
 
-뒤로 미룬 결정:
-
-- 배포 호스트(정적 호스팅 서비스 선택)는 P05에서 정한다.
+뒤로 미룬 결정도 없다. 배포 호스트는 GitHub Pages로 정했다(2026-10-22 Owner 결정, v0.6, §7).
 
 ---
 
@@ -192,3 +190,4 @@ React + TypeScript, Vite, Monaco Editor, CSS, localStorage 저장, 정적 웹 �
 | v0.3 | 2026-10-22 | 독립 검증 반영: P1 목록 표현을 ideation에 맞춤, 히든 엔딩 P1 분류를 가정으로 표시, 실행 대상·탭 복원 가정 추가(§8) | [검증 기록](verifications/2026-10-22/initial_docs_and_p01_scaffold.md) |
 | v0.4 | 2026-10-22 | Owner 합의: 실행은 현재 사건 파일이 활성 탭일 때만(§3.5, 재검증 N1 해소 — v0.3의 "활성 탭 무관" 가정 폐기). SoT 갱신은 Owner 합의로만 한다는 규칙 추가(§1) | [재검증 기록](verifications/2026-10-22/initial_docs_and_p01_scaffold_reverify.md), [작업 로그](daily_logs/2026-10-22/work_log.md) |
 | v0.5 | 2026-10-22 | Owner 확인: 위임한 판단의 결과도 합의(§1). 이에 따라 §8 "작업 가정"을 확정 규칙으로 이동 — 단축키(§3.5), 저장·복원(§3.6 신설: 탭 복원, 미해금 탭 제외, 시나리오 버전 불일치 시 편집 값 초기화 — 뒤 둘은 데이터 계약에서 위임 판단으로 정한 규칙을 끌어올림), 히든 엔딩 P1(§5.2). 미결은 배포 호스트만 | [작업 로그](daily_logs/2026-10-22/work_log.md) |
+| v0.6 | 2026-10-22 | Owner 결정: 배포 호스트는 GitHub Pages(§8) | [작업 로그](daily_logs/2026-10-22/work_log.md) |
