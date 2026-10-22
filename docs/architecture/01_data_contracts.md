@@ -202,7 +202,7 @@ type PlayerEdits = Record<SceneId, Record<string, string>>;  // 사건 → 필�
 ```
 
 - 원문 리터럴(예: `"2"`, `"True"`)을 그대로 둔다. 해석·검증은 실행 시 parser가 한다.
-- 화면 텍스트는 매번 `render`로 재구성하므로 스토리 오버레이와 충돌하지 않는다.
+- 화면 텍스트는 매번 `render` → `applyEdits`로 재구성하므로 스토리 오버레이와 충돌하지 않는다.
 - 해결된 사건의 값은 `Progress.choices`에서 오므로 `PlayerEdits`에서 지운다(DB-03 고정 표시). 따라서 실제로 남는 항목은 현재 사건 하나뿐이다.
 - 편집 내용은 **아직 실행되지 않은 입력**이다. 실행이 성공해야만 `Progress`에 들어간다. 편집 자체가 진행 상태를 바꾸지 않는다.
 
@@ -236,7 +236,7 @@ type SaveSnapshot = {
 ```
 
 - 키: `incident-workspace:save:<scenarioId>` (시나리오별 1슬롯).
-- 저장 시점: 실행 성공 직후, 편집·탭 변경 시(디바운스). 실행 실패 시에는 진행 상태를 바꾸지 않으므로 그로 인한 저장도 없다.
+- 저장 시점: 실행 성공 직후, 편집·탭 변경 시(디바운스), 그리고 페이지를 떠날 때(`pagehide`)에는 대기 중인 저장을 즉시 실행한다. 그래서 새로고침 직전의 편집도 복원된다. 실행 실패 시에는 진행 상태를 바꾸지 않으므로 그로 인한 저장도 없다.
 - 복원 규칙:
   - JSON 파싱 실패 또는 `schemaVersion` 불일치 → 저장을 버리고 새 게임. Terminal에 한 줄 안내.
   - `scenarioVersion` 불일치 → `choices`를 재생해 보고, 재생 중 존재하지 않는 사건·필드·값을 만나면 그 직전까지 유효한 기록만 유지. `playerEdits`는 전부 버린다(현재 사건이 달라졌을 수 있으므로 템플릿 기본값으로 돌아감). `workspace`는 위 §8 규칙으로 정리.
@@ -251,6 +251,6 @@ type SaveSnapshot = {
 | --- | --- | --- |
 | 값 타입 `Value`, 필드 타입 `int / bool / number / string` | `engine/types.ts` | 없음 |
 | `ParseError.kind` | `engine/types.ts` | 없음 (Terminal 문구는 `kind`에서 만듦) |
-| 선택지 기본값 | 시나리오 `.py` 템플릿 텍스트 | 없음 |
+| 선택지 기본값 | 시나리오 `.py` 템플릿 텍스트 | `ValueSlot.defaultLiteral` (Engine이 템플릿에서 읽은 투영, 저장 안 함) |
 | 허용 값·범위 | `Scene.editableFields` | 템플릿 주석(사람용 설명) — 시나리오 검증 테스트로 일치 확인 (P04) |
 | 저장 키 접두사, `schemaVersion` | `persistence/` | 없음 |
