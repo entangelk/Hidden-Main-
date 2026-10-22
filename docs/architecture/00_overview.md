@@ -52,8 +52,10 @@ ideation §6.1의 6개 모듈을 위 경계에 배치한 결과다.
 ## 3. 실행 흐름 (`Ctrl+Enter`)
 
 ```text
+0. App: 활성 탭이 currentSceneId의 스테이지 파일이 아니면 → Terminal 안내 한 줄, 종료 (SoT §3.5)
 1. App: 실행 대상 = derive 결과의 currentSceneId (해당 스테이지 파일의 마지막 함수)
-2. Engine.parse(scene, playerEdits[scene.id]) → 성공: Choice / 실패: ParseError[]
+2. App: 입력 리터럴 = 각 필드에 대해 playerEdits[scene.id][field] ?? 값 슬롯의 defaultLiteral
+   Engine.parse(scene, 입력 리터럴) → 성공: Choice / 실패: ParseError[]
 3. 실패 시: Terminal에 오류 출력, Progress·Explorer·파일 내용 변경 없음 (AC-07)
 4. Engine.apply(scenario, progress, choice) → 새 Progress
 5. Engine.derive(scenario, 새 Progress)     → 해금 파일, 파일 내용, 로그, 엔딩
@@ -62,7 +64,7 @@ ideation §6.1의 6개 모듈을 위 경계에 배치한 결과다.
 ```
 
 - 3단계의 "상태 변경 없음"이 AC-07의 핵심 보증이다. 파싱·검증이 끝나기 전에는 어떤 상태도 쓰지 않는다. 바뀌는 것은 Terminal 오류 출력뿐이다.
-- 실행 대상은 커서 위치나 활성 탭과 무관하게 항상 현재 사건 하나다(SoT §3.3). 해결된 함수는 다시 실행할 수 없다. Terminal의 실행 줄(예: `$ python incidents/security_audit.py`)이 대상 파일을 알려준다. 활성 탭과 무관하게 실행한다는 점은 작업 가정이다(SoT §8).
+- 실행 대상은 항상 현재 사건 하나이고, 그 사건의 파일이 활성 탭일 때만 실행한다(SoT §3.3, §3.5). 커서 위치는 상관없다. 해결된 함수는 다시 실행할 수 없다. 다른 탭에서 누르면 0단계에서 안내만 하므로, 새로 해금된 파일은 열어야만 진행된다(AC-05).
 - 엔딩 도달 후(`currentSceneId = null`) 실행하면 Terminal에 한 줄 안내만 하고 상태는 바뀌지 않는다.
 - 플레이어 코드는 어떤 경로로도 실행·`eval`되지 않는다 (R-08).
 
@@ -97,12 +99,12 @@ ideation §4.4와 §9("기본 코드, 사용자 수정, 스토리 변경 분리"
 
 ## 6. Input Parser 규칙 (MVP)
 
-- 입력: 현재 사건의 `PlayerEdits` 항목(필드명 → 원문 리터럴). 편집하지 않은 필드는 템플릿 기본값의 원문. 렌더된 파일 텍스트를 다시 파싱하지 않는다(DB-02(B)로 편집이 값 영역에 한정되므로 불필요).
+- 입력: 필드명 → 원문 리터럴 맵. App이 `PlayerEdits`의 현재 사건 항목과, 편집하지 않은 필드의 값 슬롯 `defaultLiteral`을 합쳐 만든다(§3 2단계). 렌더된 파일 텍스트를 다시 파싱하지 않는다(DB-02(B)로 편집이 값 영역에 한정되므로 불필요).
 - 리터럴 문법: 정수, 실수, `True`/`False`, 큰따옴표·작은따옴표 문자열(앞뒤 공백 허용). 그 외(식, 함수 호출, 변수 참조, 빈 값)는 오류.
 - 검증: 시나리오의 `EditableField` 정의(타입, 허용값 목록 또는 범위)와 대조.
 - 오류 종류: 리터럴 아님(`not_literal`), 타입 불일치(`type_mismatch`), 허용 범위 밖(`out_of_range`). 각 오류는 Terminal에 Python 스타일 메시지로 출력한다. 타입 정의는 [데이터 계약 §4](01_data_contracts.md#4-입력-계약-parser).
 - 필드 누락·중복은 구조상 발생하지 않으므로 다루지 않는다.
-- 값 영역의 위치 추적(어느 텍스트 구간이 어떤 필드인지)은 Editor Controller의 책임이다. Parser는 텍스트 위치를 모른다.
+- 값 영역의 위치와 기본값은 Engine의 `render`가 정적 템플릿에서 계산해 **값 슬롯**으로 내보낸다([데이터 계약 §6](01_data_contracts.md#6-파생-계약-저장-안-함)). 템플릿의 사건 블록 안에서 `필드명 = 리터럴` 줄이 곧 값 영역 표식이며, 필드당 정확히 한 줄인지는 시나리오 검증 테스트가 보장한다. Editor Controller는 슬롯을 받아 그 구간만 편집을 허용하고 편집 결과를 `PlayerEdits`로 보낸다. Parser는 텍스트 위치를 모른다.
 
 ---
 

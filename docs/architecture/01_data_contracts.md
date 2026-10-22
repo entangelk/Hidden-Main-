@@ -1,6 +1,6 @@
 # 데이터 계약
 
-> 상태: **v0.2 초안** · 2026-10-22 · 상위 기준: [`../SOT.md`](../SOT.md), [`00_overview.md`](00_overview.md)
+> 상태: **v0.3 초안** · 2026-10-22 · 상위 기준: [`../SOT.md`](../SOT.md), [`00_overview.md`](00_overview.md)
 > 작성 규칙: [`../guides/data-contracts.md`](../guides/data-contracts.md), [`../guides/api-and-persistence-schemas.md`](../guides/api-and-persistence-schemas.md)
 > 아래 타입은 계약의 모양을 보이기 위한 초안이다. 실제 정본은 구현 시 `src/engine/types.ts` 한 곳에 둔다(`SaveSnapshot`·`WorkspaceView`는 각각 `persistence/`·`ui/` 소유).
 
@@ -16,7 +16,7 @@
 | `Progress` | Story Engine | `apply()`만 | 플레이 전체 | 함 |
 | `DerivedState` | Story Engine | 없음 (계산 결과) | 계산 시점 | 안 함 |
 | `PlayerEdits` | EditorPane (플레이어) | 편집 이벤트만 | 플레이 전체 | 함 |
-| `WorkspaceView` (열린 탭, 활성 파일) | UI | UI만 | 플레이 전체 | 함 (AC-08 "같은 화면" 복원) |
+| `WorkspaceView` (열린 탭, 활성 파일) | UI | UI만 | 플레이 전체 | 함 (새로고침 후 탭 복원, SoT §8 작업 가정) |
 | `SaveSnapshot` | Persistence 어댑터 | 어댑터만 | 저장소 | localStorage |
 
 ---
@@ -82,7 +82,7 @@ type Transition = {
 type Condition = Clause[];    // 모두 참이어야 참(AND). 빈 배열 = 항상 참
 type Clause = {
   ref: { choice: string } | { flag: string };   // 이번 선택의 필드 또는 누적 플래그
-  op: "==" | "!=" | ">=" | "<=";
+  op: "==" | "!=" | ">=" | "<=";   // ">=", "<="는 숫자 값끼리만. 불리언·문자열에는 "==", "!="만 (시나리오 검증 테스트로 확인)
   value: Value;
 };
 
@@ -99,8 +99,10 @@ type Ending = { id: EndingId; log: LogLine[] };  // 엔딩 도달 시 Terminal �
 
 | ideation §6.2 | 이 계약 | 이유 |
 | --- | --- | --- |
+| `Stage.scenes` | `Stage.sceneIds` | 사건 정의는 `Scenario` 안 한 곳(`Scene`)에만 두고, 스테이지는 순서만 참조하도록 이름으로 구분 |
 | `Stage.initialCode` | `Stage.template` | 처음 화면에 그대로 보이는 코드가 아니라, 사건 블록 단위로 잘려 진행에 따라 조립되는 원본이므로(DB-03) 이름을 바꿈 |
 | `Stage.unlockCondition` | 없음 (파생) | DB-03(B)에서 스테이지 파일은 그 안의 사건이 처음 현재 사건이 될 때 나타난다. 전이 그래프에서 결정되므로 별도 조건을 두면 같은 사실을 두 곳에 쓰게 된다. 조건부로만 나타나는 파일은 P1(DB-01) |
+| `Scene.functionName` | `Scene.functionName` | 이름은 같다. 화면상 함수 이름이자, 템플릿에서 이 사건의 블록과 값 슬롯을 찾는 키로 쓰인다 |
 | `Scene.description` | 없음 (`template` 안 주석) | 위 설명 참고 |
 | `Scene.transitions` | `Scene.transitions` | 같음 |
 | `Scene.effects` | `Transition.effects` | 결과 상태 변화는 어떤 선택을 했느냐에 따라 다르므로 선택별 전이에 둠 |
@@ -165,9 +167,24 @@ type DerivedState = {
   unlockedFiles: string[];          // initialFiles + 해금된 Stage.filePath
   ending: EndingId | null;
   log: LogLine[];                   // 전체 Terminal 기록 (재생으로 복원)
-  fileView: (path: string) => string; // 템플릿 + 스토리 오버레이 (플레이어 편집 적용 전)
+  fileView: (path: string) => FileView; // 템플릿 + 스토리 오버레이 (플레이어 편집 적용 전)
+};
+
+type FileView = {
+  text: string;
+  valueSlots: ValueSlot[];          // 현재 사건의 편집 가능 구간. 현재 사건이 이 파일에 없으면 빈 배열
+};
+
+type ValueSlot = {
+  sceneId: SceneId;
+  field: string;
+  start: number;                    // text 안 문자 오프셋 (리터럴 시작)
+  end: number;                      // 리터럴 끝 (미포함)
+  defaultLiteral: string;           // 템플릿에 적힌 기본값 원문. 기본값의 유일한 출처
 };
 ```
+
+- 값 슬롯은 정적 템플릿의 사건 블록 안 `필드명 = 리터럴` 줄에서 계산한다. 슬롯의 위치·기본값은 Engine이 소유하고, UI는 읽기만 한다.
 
 - `derive(scenario, progress)`는 순수 함수다. 같은 입력이면 항상 같은 결과다.
 - MVP 분량(선택 수십 회)에서는 매번 처음부터 재생해도 비용이 무시할 수준이다. 캐시는 측정으로 필요가 확인될 때만 둔다.
