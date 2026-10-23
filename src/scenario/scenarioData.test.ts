@@ -31,6 +31,6 @@ describe('Incident 02:14 file names', () => {
     const tree = buildFileTree([...inPlayOrder].reverse())
     const incidents = tree.find((n) => n.name === 'incidents')
     expect(incidents?.kind === 'folder' && incidents.children.map((n) => n.path)).toEqual(inPlayOrder)
-    inPlayOrder.forEach((path, i) => expect(path).toMatch(new RegExp(`^incidents/0${i + 1}_`)))
+    inPlayOrder.forEach((path, i) => expect(path).toMatch(new RegExp(`^incidents/${String(i + 1).padStart(2, '0')}_`)))
   })
 })

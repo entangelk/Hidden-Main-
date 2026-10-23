@@ -207,11 +207,12 @@ export function staticProblems(scenario: Scenario): string[] {
     return scene ? scenario.stages.findIndex((st) => st.id === scene.stageId) : -1
   }
   for (const s of scenario.scenes) {
-    for (const t of s.transitions) {
-      if ('scene' in t.next && stageIndex(t.next.scene) !== -1 && stageIndex(t.next.scene) < stageIndex(s.id)) {
-        problems.push(`${s.id}: goes back to an earlier stage file (${t.next.scene})`)
-      }
-    }
+    const back = new Set(
+      s.transitions.flatMap((t) =>
+        'scene' in t.next && stageIndex(t.next.scene) !== -1 && stageIndex(t.next.scene) < stageIndex(s.id) ? [t.next.scene] : [],
+      ),
+    )
+    for (const to of back) problems.push(`${s.id}: goes back to an earlier stage file (${to})`)
   }
 
   // Dead content: a comment variant on a flag nothing sets, or a flag nothing reads.
