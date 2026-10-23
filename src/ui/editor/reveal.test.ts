@@ -36,5 +36,7 @@ describe('handoffCursorOffset', () => {
     const lineStart = text.lastIndexOf('\n', at - 1) + 1
     expect(text.slice(lineStart, at)).toBe('        return "b.py"')
     expect(text[at]).toBe('\n')
+    // The run hint is the line right under return, like the hint under a scene's value line.
+    expect(text.slice(at + 1).split('\n')[0]).toBe('        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행하면 다음 파일로 넘어간다. 왼쪽 Explorer에서 열어도 된다.')
   })
 })

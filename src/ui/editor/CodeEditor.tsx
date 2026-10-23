@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { applyEdits, shiftSlots } from '../../engine/slots'
 import type { FileView, PlayerEdits, SceneId, ValueSlot } from '../../engine/types'
 import { acceptChange } from './acceptChange'
-import { baseKey, gainedHandoff, handoffCursorOffset, textChanged } from './reveal'
+import { baseKey, gainedHandoff, HANDOFF_DEF, handoffCursorOffset, textChanged } from './reveal'
 import { monaco } from './monaco'
 
 type Props = {
@@ -206,13 +206,15 @@ export function CodeEditor({ files, edits, revision, activeFile, onEdit, onRun }
     // A newly added scene function lands at the bottom of the file. Put the cursor at the end of
     // its first value and scroll it into view (no animation), so the player can type the value and
     // press Ctrl/Cmd+Enter without reaching for the mouse (SoT §3.2).
-    if (revealRef.current.delete(activeFile) && slotsRef.current.length) {
+    const revealed = revealRef.current.delete(activeFile)
+    const gained = revealHandoffRef.current.delete(activeFile)
+    if (revealed && slotsRef.current.length) {
       const end = model.getPositionAt(slotsRef.current[0].end)
       editor.setPosition(end)
       editor.revealLineInCenterIfOutsideViewport(end.lineNumber)
-    } else if (revealHandoffRef.current.delete(activeFile)) {
-      // The scene here is done: move the cursor off its value to next_file()'s return line, where
-      // Ctrl/Cmd+Enter goes on to the next file (SoT §3.3).
+    } else if (gained || (revealed && model.getValue().includes(HANDOFF_DEF))) {
+      // The scene here is done (just now, or a left file shown for the first time after a reload):
+      // the cursor goes to next_file()'s return line, where Ctrl/Cmd+Enter goes on (SoT §3.3).
       const end = model.getPositionAt(handoffCursorOffset(model.getValue()))
       editor.setPosition(end)
       editor.revealLineInCenterIfOutsideViewport(end.lineNumber)
