@@ -131,6 +131,16 @@
 
 테스트 150개, lint·build 통과.
 
+### 12. 키보드 진행 재검증(합격) 비차단 지적 보강
+
+기록: [`../../verifications/2026-10-23/keyboard_only_play_reverify.md`](../../verifications/2026-10-23/keyboard_only_play_reverify.md)
+
+- R-N1 SoT §3.2 문구가 "새 사건 함수 추가"로만 적혀 `main.py` 상태 표시 변경 때의 커서 이동을 설명하지 못함 → "그 파일 내용이 바뀌면(새 사건 함수 추가, `main.py` 목록의 상태 표시 변경 등)"으로 정밀화. Owner가 위임한 키보드 진행 합의(v0.9) 범위 안의 문구 보강이다(SoT §1).
+- R-N2 커서 이동 조건이 브라우저 확인으로만 지켜짐 → `textChanged`·`baseKey`로 분리하고 양방향 테스트. 파일 이름을 `handoffReveal.ts` → `reveal.ts`로 바꿈(§8 표의 옛 경로는 당시 기록).
+- R-N3 템플릿이 CRLF면 실행 안내 검사가 오탐 → 줄 분리를 `\r?\n`으로.
+
+테스트 152개, lint·build 통과.
+
 ## 결정
 
 - Owner 합의(v0.7): 사건 파일 순번, 다음 파일 안내 함수. 안내 문구는 작업자 위임.

@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { applyEdits, shiftSlots } from '../../engine/slots'
 import type { FileView, PlayerEdits, SceneId, ValueSlot } from '../../engine/types'
 import { acceptChange } from './acceptChange'
-import { gainedHandoff, HANDOFF_DEF } from './handoffReveal'
+import { baseKey, gainedHandoff, HANDOFF_DEF, textChanged } from './reveal'
 import { monaco } from './monaco'
 
 type Props = {
@@ -124,7 +124,7 @@ export function CodeEditor({ files, edits, revision, activeFile, onEdit, onRun }
     const engineChanged = new Set<string>()
     for (const [path, model] of modelsRef.current) {
       const base = files[path]
-      const key = `${revision}\n${base?.text}`
+      const key = baseKey(revision, base?.text)
       const previous = baseRef.current.get(path)
       if (!base || previous === key) continue
       baseRef.current.set(path, key)
@@ -135,7 +135,7 @@ export function CodeEditor({ files, edits, revision, activeFile, onEdit, onRun }
       engineChanged.add(path)
       // The cursor jumps only when the text itself changed (a function added), not on every solve
       // elsewhere: main.py and left files keep the player's cursor (SoT §3.2).
-      if (previous?.slice(previous.indexOf('\n') + 1) !== base.text) revealRef.current.add(path)
+      if (textChanged(previous, base.text)) revealRef.current.add(path)
     }
 
     const pathChanged = shownPathRef.current !== activeFile
@@ -153,7 +153,7 @@ export function CodeEditor({ files, edits, revision, activeFile, onEdit, onRun }
     let model = modelsRef.current.get(activeFile)
     if (!model) {
       const created = monaco.editor.createModel(applyEdits(base, edits).text, 'python', monaco.Uri.file(activeFile))
-      baseRef.current.set(activeFile, `${revision}\n${base.text}`)
+      baseRef.current.set(activeFile, baseKey(revision, base.text))
       created.onDidChangeContent((e) => {
         if (writingRef.current) return
         const change = e.changes.length === 1 ? e.changes[0] : null

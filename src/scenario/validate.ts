@@ -176,7 +176,7 @@ export function staticProblems(scenario: Scenario): string[] {
     // it lies outside the block when the value line is the function's last code line).
     const lastField = Math.max(...scene.editableFields.map((f) => body.search(new RegExp(`^ *${f.name} *=`, 'm'))))
     if (lastField >= 0) {
-      const [fieldLine, next] = stage.template.slice(block[0] + lastField).split('\n')
+      const [fieldLine, next] = stage.template.slice(block[0] + lastField).split(/\r?\n/)
       if (next !== `${fieldLine.match(/^ */)![0]}${RUN_HINT}`) problems.push(`${scene.id}: run hint missing under the value line`)
     }
     const slots = findValueSlots(stage.template, scene.id, scene.functionName, scene.editableFields)

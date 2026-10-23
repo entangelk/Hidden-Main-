@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { gainedHandoff } from './handoffReveal'
+import { baseKey, gainedHandoff, textChanged } from './reveal'
 
 const before = '    def escalate(self):\n        return 1\n'
 const after = `${before}\n    def next_file(self):\n        return "b.py"\n`
@@ -13,5 +13,17 @@ describe('gainedHandoff', () => {
     expect(gainedHandoff(after, after)).toBe(false)
     expect(gainedHandoff(before, before)).toBe(false)
     expect(gainedHandoff(undefined, before)).toBe(false)
+  })
+})
+
+describe('textChanged', () => {
+  it('is true when the text differs or nothing was built yet (under-strict guard: cursor follows a new function)', () => {
+    expect(textChanged(baseKey(1, 'a\nb'), 'a\nb\nc')).toBe(true)
+    expect(textChanged(undefined, 'a')).toBe(true)
+  })
+
+  it('is false when only the revision moved (over-strict guard: no jump on every solve elsewhere)', () => {
+    expect(textChanged(baseKey(1, 'a\nb'), 'a\nb')).toBe(false)
+    expect(textChanged(baseKey(1, 'a'), 'a')).toBe(false)
   })
 })
