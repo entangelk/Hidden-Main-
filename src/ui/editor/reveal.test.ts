@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { baseKey, gainedHandoff, textChanged } from './reveal'
+import { handoffBlock } from '../../engine/render'
+import { baseKey, gainedHandoff, handoffCursorOffset, textChanged } from './reveal'
 
 const before = '    def escalate(self):\n        return 1\n'
 const after = `${before}\n    def next_file(self):\n        return "b.py"\n`
@@ -25,5 +26,15 @@ describe('textChanged', () => {
   it('is false when only the revision moved (over-strict guard: no jump on every solve elsewhere)', () => {
     expect(textChanged(baseKey(1, 'a\nb'), 'a\nb')).toBe(false)
     expect(textChanged(baseKey(1, 'a'), 'a')).toBe(false)
+  })
+})
+
+describe('handoffCursorOffset', () => {
+  it('is the end of the return line of next_file(), not of an earlier return', () => {
+    const text = `${before}\n${handoffBlock('    ', 'b.py')}\n\nif __name__ == "__main__":\n    main()\n`
+    const at = handoffCursorOffset(text)
+    const lineStart = text.lastIndexOf('\n', at - 1) + 1
+    expect(text.slice(lineStart, at)).toBe('        return "b.py"')
+    expect(text[at]).toBe('\n')
   })
 })

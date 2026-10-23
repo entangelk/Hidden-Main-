@@ -2,6 +2,13 @@ import { HANDOFF_FUNCTION } from '../../engine/render'
 
 export const HANDOFF_DEF = `def ${HANDOFF_FUNCTION}(`
 
+/** Offset of the end of next_file()'s `return` line, where the cursor goes when it appears. */
+export function handoffCursorOffset(text: string): number {
+  const ret = text.indexOf('return ', text.indexOf(HANDOFF_DEF))
+  const end = text.indexOf('\n', ret)
+  return end === -1 ? text.length : end
+}
+
 /** True when the engine text just gained the pointer to the next file (architecture §5.2). */
 export function gainedHandoff(previousText: string | undefined, text: string): boolean {
   return text.includes(HANDOFF_DEF) && !previousText?.includes(HANDOFF_DEF)

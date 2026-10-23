@@ -171,6 +171,13 @@
 
 재검증(합격): [`../../verifications/2026-10-23/search_scene_retries_reverify.md`](../../verifications/2026-10-23/search_scene_retries_reverify.md). 배포된 v4·v1 저장이 버전 안내와 함께 잘린 지점부터 이어지는 것을 확인. 남은 R-N1(잘리지 않은 v1 저장도 편집 값은 초기화됨)은 두 시나리오 문서에 한 줄로 반영.
 
+### 15. `next_file()`이 생길 때 커서와 실행 안내
+
+- Owner 요청: 안내 함수가 생기면 커서가 방금 해결한 값(`unit` 등)에 남아 헷갈린다 → `return` 끝으로. `return` 아래에 "Ctrl+Enter로 다음 장으로 진행" 주석.
+- 구현: `handoffBlock`에서 셋째 줄의 실행 안내를 `return` 바로 아래로 옮김(다른 사건의 값 줄 아래 안내와 같은 자리, 문구 "Ctrl+Enter(macOS는 Cmd+Enter)로 실행하면 다음 파일로 넘어간다. 왼쪽 Explorer에서 열어도 된다."). 편집기는 안내 함수가 새로 생기면 커서를 `return` 줄 끝으로(`handoffCursorOffset`, 단위 테스트).
+- 저장 영향 없음: 안내 함수는 값 슬롯 뒤에 붙는 파생 텍스트라 진행·편집 값과 무관하다(버전 그대로).
+- 검증: 테스트 167개, lint·build 통과. 브라우저에서 CRAC-3 해결 직후 커서가 `return "cooling/02_unit_control.py"` 줄에 있고 Ctrl+Enter로 02 파일이 열림, 콘솔 오류 0건.
+
 ## 결정
 
 - Owner 합의(v0.7): 사건 파일 순번, 다음 파일 안내 함수. 안내 문구는 작업자 위임.

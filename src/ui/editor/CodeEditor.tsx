@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { applyEdits, shiftSlots } from '../../engine/slots'
 import type { FileView, PlayerEdits, SceneId, ValueSlot } from '../../engine/types'
 import { acceptChange } from './acceptChange'
-import { baseKey, gainedHandoff, HANDOFF_DEF, textChanged } from './reveal'
+import { baseKey, gainedHandoff, handoffCursorOffset, textChanged } from './reveal'
 import { monaco } from './monaco'
 
 type Props = {
@@ -211,7 +211,11 @@ export function CodeEditor({ files, edits, revision, activeFile, onEdit, onRun }
       editor.setPosition(end)
       editor.revealLineInCenterIfOutsideViewport(end.lineNumber)
     } else if (revealHandoffRef.current.delete(activeFile)) {
-      editor.revealLineInCenterIfOutsideViewport(model.getPositionAt(model.getValue().indexOf(HANDOFF_DEF)).lineNumber)
+      // The scene here is done: move the cursor off its value to next_file()'s return line, where
+      // Ctrl/Cmd+Enter goes on to the next file (SoT §3.3).
+      const end = model.getPositionAt(handoffCursorOffset(model.getValue()))
+      editor.setPosition(end)
+      editor.revealLineInCenterIfOutsideViewport(end.lineNumber)
     }
   }, [activeFile, files, edits, revision])
 
