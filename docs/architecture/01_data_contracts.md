@@ -54,7 +54,7 @@ type StaticFile = { path: string; content: string };
 
 type Stage = {
   id: StageId;
-  filePath: string;           // 예: "incidents/security_audit.py"
+  filePath: string;           // 예: "incidents/02_security_audit.py"
   template: string;           // .py 원문 (?raw import). 사건 함수 블록 단위로 나뉘어 진행에 따라 추가됨 (DB-03)
   sceneIds: SceneId[];        // 파일 안 사건 순서
 };

@@ -3,7 +3,7 @@
 import { holds } from '../engine/condition'
 import { derive } from '../engine/derive'
 import { parse } from '../engine/parser'
-import { DIRECTIVE, parseIf } from '../engine/render'
+import { DIRECTIVE, HANDOFF_FUNCTION, parseIf } from '../engine/render'
 import { findValueSlots, functionBlock } from '../engine/slots'
 import type { Choice, EditableField, Scenario, Scene, Value } from '../engine/types'
 
@@ -149,6 +149,7 @@ export function staticProblems(scenario: Scenario): string[] {
     const t = st.template
     if (t.includes('\t')) problems.push(`${st.filePath}: tab character`)
     if (t.includes('"""') || t.includes("'''")) problems.push(`${st.filePath}: triple-quoted string`)
+    if (functionBlock(t, HANDOFF_FUNCTION)) problems.push(`${st.filePath}: ${HANDOFF_FUNCTION}() is reserved for the engine`)
     const order = st.sceneIds.map((id) => scenario.scenes.find((s) => s.id === id)?.functionName ?? '?')
     const positions = order.map((fn) => functionBlock(t, fn)?.[0] ?? -1)
     if (positions.includes(-1)) problems.push(`${st.filePath}: scene function missing (${order.join(', ')})`)

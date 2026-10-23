@@ -1,6 +1,6 @@
 # 시나리오 — *Incident 02:14*
 
-> 상태: v3 (시나리오 `version: 3`) · 2026-10-22 · 코드: `src/scenario/incident-0214/`
+> 상태: v4 (시나리오 `version: 4`) · 2026-10-23 · 코드: `src/scenario/incident-0214/`
 > 상위 기준: [`../SOT.md`](../SOT.md) §5.4, [`../architecture/01_data_contracts.md`](../architecture/01_data_contracts.md) §3
 
 ## 줄거리
@@ -13,13 +13,17 @@
 | --- | --- | --- | --- |
 | — | `main.py` | 예 (사용법 안내) | — |
 | — | `config/settings.py` | 예 (등록 대역 단서) | — |
-| 1 | `incidents/event_001.py` | 예 | `triage_alert`, `check_schedule`, `escalate` |
-| 2 | `incidents/security_audit.py` | `escalate` 해결 후 | `audit_logins`, `review_access`, `preserve_logs` |
-| 3 | `incidents/power_control.py` | `preserve_logs` 해결 후 | `inspect_power`, `set_limit` |
-| 4 | `incidents/sublevel_access.py` | `set_limit` 해결 후 | `request_access`, `enter_room`, `handle_device` |
-| 5 | `incidents/case_report.py` | `handle_device` 해결 후 | `draft_report`, `submit_report` |
+| 1 | `incidents/01_event_001.py` | 예 | `triage_alert`, `check_schedule`, `escalate` |
+| 2 | `incidents/02_security_audit.py` | `escalate` 해결 후 | `audit_logins`, `review_access`, `preserve_logs` |
+| 3 | `incidents/03_power_control.py` | `preserve_logs` 해결 후 | `inspect_power`, `set_limit` |
+| 4 | `incidents/04_sublevel_access.py` | `set_limit` 해결 후 | `request_access`, `enter_room`, `handle_device` |
+| 5 | `incidents/05_case_report.py` | `handle_device` 해결 후 | `draft_report`, `submit_report` |
 
-새 게임은 `main.py`(사용법)와 `incidents/event_001.py` 두 탭을 열고 `main.py`를 활성으로 시작한다.
+새 게임은 `main.py`(사용법)와 `incidents/01_event_001.py` 두 탭을 열고 `main.py`를 활성으로 시작한다.
+
+- 파일 이름의 순번(`01_`~`05_`)은 생성 순서다. Explorer 이름순 정렬과 일치한다(SoT v0.7 §5.4). 템플릿 원본 파일 이름(`src/scenario/incident-0214/*.py`)은 순번 없이 그대로 둔다.
+- 1~4번 파일은 마지막 사건을 해결하면 그 아래에 다음 파일 안내 함수 `next_file()`이 붙는다(엔진이 생성, 아키텍처 §5.2). 5번은 엔딩으로 끝나므로 붙지 않는다.
+- v4: 파일 경로만 바뀌었다. 사건 id는 같으므로 v3 저장의 진행은 이어지고, 편집 중이던 값과 옛 경로의 탭은 버전 규칙(SoT §3.6)에 따라 초기화된다.
 
 ## 사건과 전이
 

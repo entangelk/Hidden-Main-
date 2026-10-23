@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { buildFileTree } from '../ui/explorer/fileTree'
 import { incident0214 } from './incident-0214'
 import { miniScenario } from './mini'
 
@@ -21,5 +22,14 @@ describe('scenario data', () => {
 
   it('the check itself finds a function', () => {
     expect(findFunctions({ a: [{ b: () => 1 }] })).toEqual(['scenario.a.0.b'])
+  })
+})
+
+describe('Incident 02:14 file names', () => {
+  it('list the stage files in play order in the Explorer (numbered names, plain name sort)', () => {
+    const inPlayOrder = incident0214.stages.map((st) => st.filePath)
+    const tree = buildFileTree([...inPlayOrder].reverse())
+    const incidents = tree.find((n) => n.name === 'incidents')
+    expect(incidents?.kind === 'folder' && incidents.children.map((n) => n.path)).toEqual(inPlayOrder)
   })
 })

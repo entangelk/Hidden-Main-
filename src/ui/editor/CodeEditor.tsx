@@ -1,8 +1,11 @@
 import { useEffect, useRef } from 'react'
+import { HANDOFF_FUNCTION } from '../../engine/render'
 import { applyEdits, shiftSlots } from '../../engine/slots'
 import type { FileView, PlayerEdits, SceneId, ValueSlot } from '../../engine/types'
 import { acceptChange } from './acceptChange'
 import { monaco } from './monaco'
+
+const HANDOFF_DEF = `def ${HANDOFF_FUNCTION}(`
 
 type Props = {
   /** Engine views before player edits (DerivedState.files). */
@@ -36,6 +39,8 @@ export function CodeEditor({ files, edits, revision, activeFile, onEdit, onRun }
   // Files whose engine text changed (or that were never shown) since they were last on screen:
   // the next time they are shown, the current scene's value is scrolled into view.
   const revealRef = useRef(new Set<string>())
+  // Files that just gained the pointer to the next file; it is scrolled into view (architecture §5.2).
+  const revealHandoffRef = useRef(new Set<string>())
   // Latest callbacks, so the editor created once never calls stale closures.
   const callbacksRef = useRef({ onEdit, onRun })
   useEffect(() => {
@@ -67,6 +72,7 @@ export function CodeEditor({ files, edits, revision, activeFile, onEdit, onRun }
     const models = modelsRef.current
     const viewStates = viewStatesRef.current
     const reveal = revealRef.current
+    const revealHandoff = revealHandoffRef.current
     const bases = baseRef.current
     return () => {
       editor.dispose()
@@ -74,6 +80,7 @@ export function CodeEditor({ files, edits, revision, activeFile, onEdit, onRun }
       models.clear()
       viewStates.clear()
       reveal.clear()
+      revealHandoff.clear()
       bases.clear()
       shownPathRef.current = null
       editorRef.current = null
@@ -120,8 +127,10 @@ export function CodeEditor({ files, edits, revision, activeFile, onEdit, onRun }
     for (const [path, model] of modelsRef.current) {
       const base = files[path]
       const key = `${revision}\n${base?.text}`
-      if (!base || baseRef.current.get(path) === key) continue
+      const previous = baseRef.current.get(path)
+      if (!base || previous === key) continue
       baseRef.current.set(path, key)
+      if (base.text.includes(HANDOFF_DEF) && !previous?.includes(HANDOFF_DEF)) revealHandoffRef.current.add(path)
       // Rewritten even when the text already matches (solved with the engine's own spelling): the
       // undo history must not reach back past the solve (architecture §6.2).
       write(model, applyEdits(base, edits).text)
@@ -198,6 +207,8 @@ export function CodeEditor({ files, edits, revision, activeFile, onEdit, onRun }
     // move, no animation) so the player sees what changed.
     if (revealRef.current.delete(activeFile) && slotsRef.current.length) {
       editor.revealLineInCenterIfOutsideViewport(model.getPositionAt(slotsRef.current[0].start).lineNumber)
+    } else if (revealHandoffRef.current.delete(activeFile)) {
+      editor.revealLineInCenterIfOutsideViewport(model.getPositionAt(model.getValue().indexOf(HANDOFF_DEF)).lineNumber)
     }
   }, [activeFile, files, edits, revision])
 

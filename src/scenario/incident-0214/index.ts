@@ -21,17 +21,17 @@ const found: Transition['when'] = [{ ref: { flag: 'device_found' }, op: '==', va
 
 export const incident0214 = {
   id: 'incident-0214',
-  version: 3,
+  version: 4,
   initialFiles: [
     { path: 'main.py', content: mainPy },
     { path: 'config/settings.py', content: settingsPy },
   ],
   stages: [
-    { id: 's1', filePath: 'incidents/event_001.py', template: event001Py, sceneIds: ['triage', 'schedule', 'escalate'] },
-    { id: 's2', filePath: 'incidents/security_audit.py', template: securityAuditPy, sceneIds: ['audit', 'review', 'preserve'] },
-    { id: 's3', filePath: 'incidents/power_control.py', template: powerControlPy, sceneIds: ['power', 'limit'] },
-    { id: 's4', filePath: 'incidents/sublevel_access.py', template: sublevelAccessPy, sceneIds: ['access', 'room', 'device'] },
-    { id: 's5', filePath: 'incidents/case_report.py', template: caseReportPy, sceneIds: ['report', 'submit'] },
+    { id: 's1', filePath: 'incidents/01_event_001.py', template: event001Py, sceneIds: ['triage', 'schedule', 'escalate'] },
+    { id: 's2', filePath: 'incidents/02_security_audit.py', template: securityAuditPy, sceneIds: ['audit', 'review', 'preserve'] },
+    { id: 's3', filePath: 'incidents/03_power_control.py', template: powerControlPy, sceneIds: ['power', 'limit'] },
+    { id: 's4', filePath: 'incidents/04_sublevel_access.py', template: sublevelAccessPy, sceneIds: ['access', 'room', 'device'] },
+    { id: 's5', filePath: 'incidents/05_case_report.py', template: caseReportPy, sceneIds: ['report', 'submit'] },
   ],
   scenes: [
     // ---- Stage 1: event_001.py — the alert ----

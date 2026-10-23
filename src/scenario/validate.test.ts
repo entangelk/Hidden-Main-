@@ -58,6 +58,7 @@ describe('validateScenario', () => {
     ['unreachable scene', (s) => s.scenes[0].transitions.forEach((t) => (t.next = { scene: 'report' })), 'contain: unreachable'],
     ['@if on a flag nothing sets', (s) => (s.stages[1].template = s.stages[1].template.replace('@if isolated', '@if isolatd')), 'incidents/report.py: @if on flag "isolatd" that no transition sets'],
     ['flag never read', (s) => s.scenes[1].transitions[1].effects.push({ flag: 'unused', value: 1 }), 'flag "unused" is set but never read'],
+    ['reserved next_file()', (s) => (s.stages[1].template += '\n    def next_file(self):\n        pass\n'), 'incidents/report.py: next_file() is reserved for the engine'],
     ['missing function', (s) => (s.stages[1].template = s.stages[1].template.replace('def write_report', 'def write_rep0rt')), 'incidents/report.py: scene function missing (write_report)'],
     ['field without a literal slot', (s) => (s.stages[1].template = s.stages[1].template.replace('        action = 1\n', '        action = int("1")\n')), 'report: a field has no literal slot (default must be a plain literal)'],
     ['string option not explained', (s) => {
