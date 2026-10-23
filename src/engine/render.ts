@@ -77,7 +77,7 @@ export function handoffBlock(indent: string, nextFile: string): string {
     `${indent}    # 다음 사건 파일이 생성됐다: ${nextFile}`,
     `${indent}    # 왼쪽 Explorer에서 그 파일을 열어 이어서 진행한다.`,
     '',
-    `${indent}    return workspace.open("${nextFile}")`,
+    `${indent}    return "${nextFile}"`,
   ].join('\n')
 }
 

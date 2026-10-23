@@ -157,7 +157,7 @@ describe('derive — pointer to the next file (architecture §5.2)', () => {
   it('adds next_file() below the last function of the file play just left, pointing at the new file', () => {
     const main = derive(scenario, left).files['main.py'].text
     expect(main).toContain('    def next_file(self):\n')
-    expect(main).toContain('return workspace.open("incidents/report.py")')
+    expect(main).toContain('return "incidents/report.py"')
     // Inside the class, right after contain(), before the module code at the bottom.
     expect(main.indexOf('return monitor.contain(isolate)')).toBeLessThan(main.indexOf('def next_file'))
     expect(main.indexOf('def next_file')).toBeLessThan(main.indexOf('if __name__'))

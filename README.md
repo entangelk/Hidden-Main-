@@ -6,7 +6,7 @@ VS Code처럼 보이는 웹 IDE 안에서 코드 주석을 읽고, 지정된 변
 
 배포 주소: https://entangelk.github.io/Hidden-Main-/
 
-1. Explorer에서 `main.py`를 엽니다.
+1. 처음 열려 있는 `main.py`의 사용법을 읽고, `incidents/01_event_001.py` 탭으로 옮깁니다.
 2. 주석을 읽고, 밑줄 친 값만 바꿉니다(다른 곳은 편집되지 않습니다).
 3. `Ctrl+Enter`(macOS `Cmd+Enter`)로 실행합니다. 현재 사건 파일이 활성 탭이어야 합니다.
 4. Terminal에서 결과를 확인하고, 새로 생긴 함수나 파일로 넘어갑니다.

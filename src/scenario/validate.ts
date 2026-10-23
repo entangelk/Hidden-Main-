@@ -201,6 +201,18 @@ export function staticProblems(scenario: Scenario): string[] {
     return cyclic
   }
   if (scenario.scenes.some((s) => visit(s.id))) problems.push('transition graph has a cycle')
+  // Files go forward too: a left file keeps its next_file() pointer and its number (architecture §5.2).
+  const stageIndex = (id: string) => {
+    const scene = scenario.scenes.find((x) => x.id === id)
+    return scene ? scenario.stages.findIndex((st) => st.id === scene.stageId) : -1
+  }
+  for (const s of scenario.scenes) {
+    for (const t of s.transitions) {
+      if ('scene' in t.next && stageIndex(t.next.scene) !== -1 && stageIndex(t.next.scene) < stageIndex(s.id)) {
+        problems.push(`${s.id}: goes back to an earlier stage file (${t.next.scene})`)
+      }
+    }
+  }
 
   // Dead content: a comment variant on a flag nothing sets, or a flag nothing reads.
   const setFlags = new Set(scenario.scenes.flatMap((s) => s.transitions.flatMap((t) => t.effects.map((e) => e.flag))))

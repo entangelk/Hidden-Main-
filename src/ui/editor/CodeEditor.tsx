@@ -1,11 +1,9 @@
 import { useEffect, useRef } from 'react'
-import { HANDOFF_FUNCTION } from '../../engine/render'
 import { applyEdits, shiftSlots } from '../../engine/slots'
 import type { FileView, PlayerEdits, SceneId, ValueSlot } from '../../engine/types'
 import { acceptChange } from './acceptChange'
+import { gainedHandoff, HANDOFF_DEF } from './handoffReveal'
 import { monaco } from './monaco'
-
-const HANDOFF_DEF = `def ${HANDOFF_FUNCTION}(`
 
 type Props = {
   /** Engine views before player edits (DerivedState.files). */
@@ -130,7 +128,7 @@ export function CodeEditor({ files, edits, revision, activeFile, onEdit, onRun }
       const previous = baseRef.current.get(path)
       if (!base || previous === key) continue
       baseRef.current.set(path, key)
-      if (base.text.includes(HANDOFF_DEF) && !previous?.includes(HANDOFF_DEF)) revealHandoffRef.current.add(path)
+      if (gainedHandoff(previous, base.text)) revealHandoffRef.current.add(path)
       // Rewritten even when the text already matches (solved with the engine's own spelling): the
       // undo history must not reach back past the solve (architecture §6.2).
       write(model, applyEdits(base, edits).text)
