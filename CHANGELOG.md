@@ -2,12 +2,19 @@
 
 | 날짜 | 변경 | 상세 |
 | --- | --- | --- |
+| 2026-10-23 | `main.py` 시나리오 선택·처음부터 다시 하기, 새 시나리오 *Thermal Drift*·*Unlogged Run* (SoT v0.8) | [작업 로그](docs/daily_logs/2026-10-23/work_log.md) |
 | 2026-10-23 | 첫 플레이 피드백: 사건 파일 이름에 순번, 다음 파일 안내 함수 `next_file()` (SoT v0.7), README | [작업 로그](docs/daily_logs/2026-10-23/work_log.md) |
 | 2026-10-22 | P04 시나리오 *Incident 02:14* 완료 (사건 13개, 엔딩 2개) | [작업 로그](docs/daily_logs/2026-10-22/work_log.md) |
 | 2026-10-22 | P03 데이터 기반 스토리 엔진 + 저장 완료 | [작업 로그](docs/daily_logs/2026-10-22/work_log.md) |
 | 2026-10-22 | P02 핵심 루프 프로토타입 완료 (값 편집 → 실행 → 결과 로그 → 새 파일 생성) | [작업 로그](docs/daily_logs/2026-10-22/work_log.md) |
 | 2026-10-22 | P01 IDE 셸 완료 (Monaco 편집기, Explorer, 탭, Terminal, Status Bar) | [작업 로그](docs/daily_logs/2026-10-22/work_log.md) |
 | 2026-10-22 | 초기 SoT v0.1, 아키텍처 초안, 페이즈 P01~P05, 결정 브리프 DB-01~04 작성 → DB-01~04 해결(SoT v0.2), P01 프로젝트 골격 | [작업 로그](docs/daily_logs/2026-10-22/work_log.md) |
+
+## 2026-10-23 — 시나리오 선택
+
+- `main.py`에서 `scenario` 번호를 바꿔 실행하면 그 시나리오로 이동. 시나리오마다 진행이 따로 저장되어 이어서 함
+- `restart = True`로 실행하면 고른 시나리오만 처음부터
+- 새 시나리오 2개: *Thermal Drift*(데이터센터 냉각 이상), *Unlogged Run*(연구소 자동화 오류). 각 5~10분, 엔딩 2개
 
 ## 2026-10-23 — 첫 플레이 피드백 반영
 

@@ -1,6 +1,6 @@
 # 아키텍처 개요
 
-> 상태: **v0.6** · 2026-10-23 · 상위 기준: [`../SOT.md`](../SOT.md)
+> 상태: **v0.7** · 2026-10-23 · 상위 기준: [`../SOT.md`](../SOT.md)
 > 이 문서는 SoT의 요구사항을 어떤 구조로 구현할지 정한다. SoT와 충돌하면 SoT가 우선한다.
 > Owner 결정(DB-01~04, 모두 B)을 반영한 부분은 해당 브리프 ID로 표시한다.
 
@@ -67,6 +67,20 @@ ideation §6.1의 6개 모듈을 위 경계에 배치한 결과다.
 - 3단계의 "상태 변경 없음"이 AC-07의 핵심 보증이다. 파싱·검증이 끝나기 전에는 어떤 상태도 쓰지 않는다. 바뀌는 것은 Terminal 오류 출력뿐이다.
 - 실행 대상은 항상 현재 사건 하나이고, 그 사건의 파일이 활성 탭일 때만 실행한다(SoT §3.3, §3.5). 커서 위치는 상관없다. 해결된 함수는 다시 실행할 수 없다. 다른 탭에서 누르면 1단계에서 안내만 하므로, 새로 해금된 파일은 열어야만 진행된다(AC-05).
 - 1단계의 두 안내 경로와 3단계 실패 경로 모두 Terminal 출력 외에는 아무 상태도 바꾸지 않는다.
+
+### 3.1 `main.py` 실행 — 시나리오 선택 (SoT v0.8 §3.7)
+
+```text
+1. 활성 탭이 main.py면 runScene 대신 runHub(순수 함수): main.py의 scenario·restart 값을 같은 parser로 검증
+   - 실패 → 사건과 같은 Traceback, 아무것도 바꾸지 않음
+2. 지금 시나리오를 즉시 저장 (편집 값·탭 포함)
+3. choose(): restart면 고른 시나리오의 저장 삭제 → 고른 id 기록
+4. App이 작업 공간(Workspace)을 새로 마운트: 고른 시나리오의 저장을 복원하고 현재 사건 파일을 연다
+```
+
+- App은 두 층이다. 바깥 `App`은 고른 시나리오만 보관하고, 안쪽 `Workspace`가 지금까지의 진행·편집·탭·저장을 맡는다. 시나리오를 바꾸면 `Workspace`를 다시 만들어 상태가 섞이지 않는다.
+- `main.py`(`app/hub/`)는 시나리오가 아니라 앱 소유다. 텍스트는 템플릿 + 시나리오 목록(제목, 소개, 상태)으로 매번 만들고, 값 슬롯은 엔진의 `findValueSlots`로 찾는다. 편집 키는 `PlayerEdits`의 `hub`이며 저장하지 않는다.
+- 시나리오를 고르지 않은 상태에서는 Explorer에 `main.py`만 있고, 다른 곳에서 실행하면 안내 한 줄만 낸다.
 - 플레이어 코드는 어떤 경로로도 실행·`eval`되지 않는다 (R-08).
 
 ---
@@ -168,12 +182,16 @@ ideation §4.4와 §9("기본 코드, 사용자 수정, 스토리 변경 분리"
 src/
   engine/          # 순수 TS: types, parser, slots, condition, render, derive(apply·derive·validPrefix)
   scenario/
-    mini/          # P03 테스트·개발용 소형 시나리오 (2스테이지·엔딩 2개)
+    index.ts       # main.py에 나오는 시나리오 목록과 순서
+    mini/          # P03 테스트·개발용 소형 시나리오 (2스테이지·엔딩 2개, 목록에는 없음)
     incident-0214/ # 첫 시나리오 데이터 + .py 템플릿 (P04)
+    thermal-drift/ # 짧은 시나리오 (v0.8)
+    unlogged-run/  # 짧은 시나리오 (v0.8)
   persistence/     # localStorage 어댑터(save.ts): 저장 형식, 복원 규칙, 디바운스 저장
   ui/
     explorer/  editor/  tabs/  terminal/  statusbar/
   app/             # 조립(App.tsx), 실행 한 번의 순수 함수(run.ts), Terminal 문구
+    hub/           # main.py: 시나리오 목록 템플릿, 값 슬롯, runHub
 ```
 
 - 시나리오 구조는 TypeScript 객체로 작성한다(DB-04). `.py` 템플릿은 TypeScript 문자열에 넣지 않고 별도 파일로 두어 Vite `?raw` import로 읽는다(들여쓰기 보존, 편집 편의).

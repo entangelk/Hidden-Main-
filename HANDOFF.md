@@ -1,23 +1,24 @@
 # HANDOFF
 
-> 마지막 자가 검수: 2026-10-23 · 37줄
+> 마지막 자가 검수: 2026-10-23 · 38줄
 
 ## 현재 상태
 
-- 제품 기준: [`docs/SOT.md`](docs/SOT.md) v0.7 (우선순위 트리는 SoT §1). 미결 Owner 결정 없음.
+- 제품 기준: [`docs/SOT.md`](docs/SOT.md) v0.8 (우선순위 트리는 SoT §1). 미결 Owner 결정 없음.
 - 아키텍처: [`docs/architecture/`](docs/architecture/)
 - 페이즈: [`docs/phases/00_index.md`](docs/phases/00_index.md) — P01~P04 완료, **P05 (완성도 개선 + 배포) 진행 중**
 - 코드 구성:
   - `src/engine/`: 순수 로직 — `types.ts`(계약 정본), `parser.ts`(`parse`·`readLiteral`·`formatLiteral`·`valuesFit`), `slots.ts`(함수 블록·값 슬롯·`shiftSlots`·`applyEdits`), `condition.ts`(`holds`), `render.ts`(사건 함수 공개·주석 변형 `# @if`·다음 파일 안내 `next_file()`), `derive.ts`(`derive`·`apply`·`validPrefix` — `choices` 재생).
-  - `src/scenario/incident-0214/`: 앱이 쓰는 본 시나리오(5스테이지·사건 13개·엔딩 2개). 줄거리·전이표는 `docs/scenario/incident-0214.md`.
+  - `src/scenario/index.ts`: `main.py`에 나오는 시나리오 목록. `incident-0214/`(5스테이지·사건 13개), `thermal-drift/`, `unlogged-run/`(각 3스테이지·사건 7개), 모두 엔딩 2개. 줄거리·전이표는 `docs/scenario/*.md`.
+  - `src/app/hub/`: `main.py`(앱 소유 시나리오 선택 파일). 목록 생성, 값 슬롯, `runHub`. 시나리오 선택·restart 규칙은 SoT §3.7.
   - `src/scenario/mini/`: 엔진 테스트용 소형 시나리오.
   - `src/scenario/validate.ts`: 시나리오 작성 규칙 검사 + 모든 상태 탐색(테스트에서 사용). 시나리오를 고치면 `npm test`가 이것으로 막는다.
-  - `src/persistence/save.ts`: 저장 형식(`SaveSnapshot`), `restore`(손상·버전 불일치·저장소 차단 처리), 디바운스 저장기. 키 `incident-workspace:save:<시나리오 id>`.
-  - `src/app/run.ts`: 실행 한 번의 순수 함수 `runScene` → 일시 출력 줄 + 새 진행. `src/app/App.tsx`: 진행·편집 값(둘 다 ref 동기 기록)·탭 상태 보관, 저장 연결(진행은 즉시, 편집·탭은 디바운스, `pagehide`는 ref의 최신 값으로 즉시).
+  - `src/persistence/save.ts`: 저장 형식(`SaveSnapshot`), `restore`(손상·버전 불일치·저장소 차단 처리), 디바운스 저장기, 고른 시나리오(`readActive`·`choose`). 키 `incident-workspace:save:<시나리오 id>`, `incident-workspace:active`.
+  - `src/app/run.ts`: 실행 한 번의 순수 함수 `runScene` → 일시 출력 줄 + 새 진행. `src/app/App.tsx`: 바깥 `App`은 고른 시나리오만 보관, 안쪽 `Workspace`(시나리오를 바꾸면 다시 마운트)가 진행·편집 값(둘 다 ref 동기 기록)·탭 상태 보관, 저장 연결(진행은 즉시, 편집·탭은 디바운스, `pagehide`와 시나리오 전환 직전은 ref의 최신 값으로 즉시).
   - Terminal = `derive` 로그(재생으로 복원) + 안내·오류 일시 출력(저장 안 함, 새로고침하면 사라짐).
 - 명령: `npm run dev` / `npm run build` / `npm run lint` / `npm test`
 - 배포: GitHub Pages. `main` 푸시 시 `.github/workflows/deploy.yml`이 lint·test·build 후 배포. 빌드는 상대 경로(`base: './'`). 저장소는 공개여야 한다(무료 플랜은 비공개 저장소에 Pages 불가).
-- 사건 파일 이름은 `incidents/01_…` ~ `05_…`(순번 = 생성 순서, Explorer 이름순과 일치). 템플릿 원본 파일 이름은 순번 없음.
+- 사건 파일 이름은 `<폴더>/01_…`(순번 = 생성 순서, Explorer 이름순과 일치, 테스트가 확인). 템플릿 원본 파일 이름은 순번 없음. 시나리오 경로에 `main.py`를 쓰면 안 된다(앱 소유, 테스트가 확인).
 
 ## 주의 사항
 

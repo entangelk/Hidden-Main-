@@ -70,8 +70,27 @@
 - R-N3: 같은 사건의 같은 메시지 중복 제거, 순번 접두사 검사를 두 자리 패딩으로(10번째 스테이지 이후도 맞음)
 - `CodeEditor`의 `gainedHandoff` 호출 자체는 브라우저 확인으로만 지킨다(조건은 단위 테스트). 편집기 컴포넌트 테스트 기반이 없어 이번 범위에서 추가하지 않음.
 
+### 7. `main.py` 시나리오 선택·처음부터 다시 하기 (SoT v0.8 §3.7)
+
+- Owner 제안: 시나리오를 몇 개 더 만들고 `main.py`에서 골라 진행. 이어서 "새로 하고 싶을 때를 위한 리셋도 `main.py`에".
+- 결정(Owner 합의, 질문 4개로 확정): 선택은 `main.py` 값 수정(별도 메뉴 없음, R-01), 짧은 시나리오 2개(데이터센터 냉각 이상, 연구소 자동화 오류), 시나리오별로 이어하기, 리셋은 `restart = True`.
+- 구현:
+  - `main.py`는 앱 소유(`src/app/hub/`). 템플릿 + 시나리오 목록(제목·소개·상태)으로 매번 생성, 값 슬롯은 엔진 `findValueSlots`, 실행은 `runHub`(같은 parser·같은 Traceback, 공용 `failureLines`로 분리).
+  - `Scenario`에 `title`, `summary` 추가. 시나리오 목록은 `src/scenario/index.ts`. *Incident 02:14*의 `main.py`는 삭제(사용법은 선택 파일로 옮김).
+  - 저장: `KeyValueStore`에 `removeItem`, 고른 시나리오 키 `incident-workspace:active`, `choose()`(restart면 그 슬롯만 삭제), `restore`에 공용 파일(`main.py`) 탭 유지.
+  - App을 두 층으로: 바깥은 고른 시나리오만, 안쪽 `Workspace`가 진행·편집·탭·저장. 고를 때 지금 시나리오를 먼저 저장하고(같은 시나리오 restart는 저장 뒤 삭제), `Workspace`를 다시 마운트해 현재 사건 파일을 연다. 완료된 시나리오를 고르면 restart 안내.
+- 새 시나리오: *Thermal Drift*(`cooling/`, 상태 190개), *Unlogged Run*(`lab/`, 상태 214개). 각 파일 3개·사건 7개·엔딩 2개, 검증기 첫 실행에서 문제 0건. 문서 `docs/scenario/thermal-drift.md`, `unlogged-run.md`.
+- 검증: 테스트 142개, lint·build 통과. 브라우저: 두 새 시나리오를 두 엔딩까지, 시나리오 간 이어하기(현재 사건 파일이 열림), 완료 시나리오 재선택 안내, restart 후 처음부터, 목록 상태 표시, 잘못된 번호 Traceback, 콘솔 오류 0건.
+
+## 결정
+
+- Owner 합의(v0.7): 사건 파일 순번, 다음 파일 안내 함수. 안내 문구는 작업자 위임.
+- Owner 합의(v0.8): `main.py` 시나리오 선택·리셋, 짧은 시나리오 2개(테마: 냉각 이상, 연구소 자동화 오류), 시나리오별 이어하기. "이거랑 합쳐서 올려보자"에 따라 v0.7 작업과 같은 PR로 올림.
+- 작업자 판단(위임 범위): `main.py` 값은 저장하지 않음, 시나리오를 고르면 현재 사건 파일을 활성으로, 이미 완료한 시나리오를 고르면 restart 안내. 시나리오 줄거리·이름·플래그 설계.
+
 ## 다음 단계
 
-1. PR 생성 → Owner 병합, 배포 주소에서 확인
+1. 독립 검증 → 보강 → 재검증
+2. PR #3 갱신, Owner 병합, 배포 주소에서 확인
 2. PR 생성 후 Owner 병합, 배포 주소에서 확인
 3. Owner 플레이 테스트(AC-10, R-07) 계속
