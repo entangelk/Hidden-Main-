@@ -3,7 +3,6 @@
 import type { LogLine, Scenario, Transition } from '../../engine/types'
 import caseReportPy from './case_report.py?raw'
 import event001Py from './event_001.py?raw'
-import mainPy from './main.py?raw'
 import powerControlPy from './power_control.py?raw'
 import securityAuditPy from './security_audit.py?raw'
 import settingsPy from './settings.py?raw'
@@ -21,9 +20,10 @@ const found: Transition['when'] = [{ ref: { flag: 'device_found' }, op: '==', va
 
 export const incident0214 = {
   id: 'incident-0214',
+  title: 'Incident 02:14',
+  summary: '새벽 02:14, 서버 db-07이 외부로 대량의 데이터를 보낸다.',
   version: 4,
   initialFiles: [
-    { path: 'main.py', content: mainPy },
     { path: 'config/settings.py', content: settingsPy },
   ],
   stages: [

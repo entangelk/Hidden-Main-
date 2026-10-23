@@ -1,7 +1,7 @@
 import { apply, derive } from '../engine/derive'
 import { parse } from '../engine/parser'
 import { applyEdits } from '../engine/slots'
-import type { LogLine, PlayerEdits, Progress, Scenario } from '../engine/types'
+import type { EditableField, FileView, LogLine, ParseError, PlayerEdits, Progress, Scenario } from '../engine/types'
 import { parseErrorLine } from './terminalMessages'
 
 export type RunResult = {
@@ -13,6 +13,30 @@ export type RunResult = {
 
 const lineOf = (text: string, offset: number) => text.slice(0, offset).split('\n').length
 const notice = (text: string): LogLine => ({ level: 'info', text })
+
+/** `$ python <file>` and a Python-style Traceback, one frame per invalid field (architecture §3). */
+export function failureLines(
+  file: string,
+  view: FileView,
+  edits: PlayerEdits,
+  fields: EditableField[],
+  functionName: string,
+  errors: ParseError[],
+): LogLine[] {
+  const shown = applyEdits(view, edits)
+  return [
+    notice(`$ python ${file}`),
+    { level: 'error', text: 'Traceback (most recent call last):' },
+    ...errors.flatMap((error): LogLine[] => {
+      const slot = shown.valueSlots.find((s) => s.field === error.field)
+      const field = fields.find((f) => f.name === error.field)!
+      return [
+        { level: 'error', text: `  File "${file}", line ${slot ? lineOf(shown.text, slot.start) : '?'}, in ${functionName}` },
+        { level: 'error', text: parseErrorLine(error, field) },
+      ]
+    }),
+  ]
+}
 
 /**
  * One Ctrl/Cmd+Enter (architecture §3, SoT §3.5). Pure. Every early exit returns lines only, so
@@ -36,23 +60,7 @@ export function runScene(
     view.valueSlots.map((s) => [s.field, edits[scene.id]?.[s.field] ?? s.defaultLiteral]),
   )
   const result = parse(scene.id, scene.editableFields, literals)
-  if (!result.ok) {
-    const shown = applyEdits(view, edits)
-    return {
-      lines: [
-        notice(`$ python ${file}`),
-        { level: 'error', text: 'Traceback (most recent call last):' },
-        ...result.errors.flatMap((error): LogLine[] => {
-          const slot = shown.valueSlots.find((s) => s.field === error.field)
-          const field = scene.editableFields.find((f) => f.name === error.field)!
-          return [
-            { level: 'error', text: `  File "${file}", line ${slot ? lineOf(shown.text, slot.start) : '?'}, in ${scene.functionName}` },
-            { level: 'error', text: parseErrorLine(error, field) },
-          ]
-        }),
-      ],
-    }
-  }
+  if (!result.ok) return { lines: failureLines(file, view, edits, scene.editableFields, scene.functionName, result.errors) }
   const next = apply(scenario, progress, result.choice)
   // apply only refuses what parse already rejects; if they ever disagree, change nothing.
   return next === progress ? { lines: [] } : { lines: [], progress: next }

@@ -51,9 +51,13 @@ export type LogLine = { level: 'info' | 'warn' | 'error'; text: string }
 
 export type Scenario = {
   id: string
+  /** Shown in the scenario list of main.py. */
+  title: string
+  /** One line under the title in that list. */
+  summary: string
   /** Bumped whenever content changes; decides save compatibility. */
   version: number
-  /** Files visible from the start that hold no scene (main.py, settings, ...). */
+  /** Files visible from the start that hold no scene (settings, ...). main.py belongs to the app. */
   initialFiles: StaticFile[]
   stages: Stage[]
   /** Every scene, once. Stages list their scenes by id. */

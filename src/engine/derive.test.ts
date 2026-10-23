@@ -88,6 +88,8 @@ describe('derive — solved values and flag timing', () => {
   // A small inline scenario where a flag changes after a scene is shown and is set twice.
   const timing: Scenario = {
     id: 't',
+    title: 't',
+    summary: '',
     version: 1,
     initialFiles: [],
     stages: [

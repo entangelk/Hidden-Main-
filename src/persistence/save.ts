@@ -3,6 +3,8 @@ import type { PlayerEdits, Progress, Scenario } from '../engine/types'
 
 export const SCHEMA_VERSION = 1
 export const saveKey = (scenarioId: string) => `incident-workspace:save:${scenarioId}`
+/** Id of the scenario chosen in main.py (SoT §3.7). Each scenario keeps its own save. */
+export const ACTIVE_KEY = 'incident-workspace:active'
 
 export type WorkspaceView = {
   openFiles: string[]
@@ -20,7 +22,7 @@ export type SaveSnapshot = {
 }
 
 /** The part of the Web Storage API the adapter uses (localStorage in the app, a fake in tests). */
-export type KeyValueStore = Pick<Storage, 'getItem' | 'setItem'>
+export type KeyValueStore = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
 
 export type Restored = {
   progress: Progress
@@ -60,9 +62,15 @@ function isSnapshot(x: unknown): x is SaveSnapshot {
 
 /**
  * Reads the save for `scenario` (data contract §9). Never throws: unreadable or incompatible saves
- * fall back to a new game, with a notice line.
+ * fall back to a new game, with a notice line. `sharedFiles` (main.py) stay visible next to the
+ * scenario's own files, so their tabs are restored too.
  */
-export function restore(store: KeyValueStore | null, scenario: Scenario, fresh: WorkspaceView): Restored {
+export function restore(
+  store: KeyValueStore | null,
+  scenario: Scenario,
+  fresh: WorkspaceView,
+  sharedFiles: string[] = [],
+): Restored {
   const newGame = (notice?: string): Restored => ({ progress: { choices: [] }, playerEdits: {}, workspace: fresh, notice })
   let raw: string | null
   try {
@@ -82,7 +90,7 @@ export function restore(store: KeyValueStore | null, scenario: Scenario, fresh: 
 
   const sameVersion = snap.scenarioVersion === scenario.version
   const choices = validPrefix(scenario, snap.progress.choices)
-  const visible = Object.keys(derive(scenario, { choices }).files)
+  const visible = [...sharedFiles, ...Object.keys(derive(scenario, { choices }).files)]
   const workspace = cleanWorkspace(snap.workspace, visible)
   const restored: Restored = {
     progress: { choices },
@@ -142,5 +150,25 @@ export function createSaver(store: KeyValueStore | null, key: string, delayMs: n
       flush()
     },
     flush,
+  }
+}
+
+/** The chosen scenario id, if it is one of `ids`. Never throws (storage may be blocked). */
+export function readActive(store: KeyValueStore | null, ids: string[]): string | null {
+  try {
+    const id = store?.getItem(ACTIVE_KEY) ?? null
+    return id !== null && ids.includes(id) ? id : null
+  } catch {
+    return null
+  }
+}
+
+/** Remembers the chosen scenario; with `restart`, first deletes that scenario's save. Best effort. */
+export function choose(store: KeyValueStore | null, id: string, restart: boolean): void {
+  try {
+    if (restart) store?.removeItem(saveKey(id))
+    store?.setItem(ACTIVE_KEY, id)
+  } catch {
+    // Saving is best effort (data contract §9).
   }
 }

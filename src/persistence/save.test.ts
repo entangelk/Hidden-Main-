@@ -1,13 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Choice } from '../engine/types'
 import { miniScenario as scenario } from '../scenario/mini'
-import { cleanWorkspace, createSaver, restore, saveKey, snapshot, type KeyValueStore } from './save'
+import { ACTIVE_KEY, choose, cleanWorkspace, createSaver, readActive, restore, saveKey, snapshot, type KeyValueStore } from './save'
 
 const fresh = { openFiles: ['main.py'], activeFile: 'main.py' }
 const key = saveKey(scenario.id)
 const memory = (initial: Record<string, string> = {}): KeyValueStore & { data: Record<string, string> } => {
   const data = { ...initial }
-  return { data, getItem: (k) => data[k] ?? null, setItem: (k, v) => void (data[k] = v) }
+  return { data, getItem: (k) => data[k] ?? null, setItem: (k, v) => void (data[k] = v), removeItem: (k) => void delete data[k] }
 }
 const c = (sceneId: string, values: Choice['values']): Choice => ({ sceneId, values })
 const twoSteps = [c('triage', { action: 2 }), c('contain', { isolate: true })]
@@ -39,6 +39,7 @@ describe('restore', () => {
         throw new Error('blocked')
       },
       setItem: () => {},
+      removeItem: () => {},
     }
     expect(restore(throwing, scenario, fresh).progress.choices).toEqual([])
     expect(restore(null, scenario, fresh).progress.choices).toEqual([])
@@ -173,7 +174,55 @@ describe('createSaver', () => {
       setItem: () => {
         throw new Error('quota')
       },
+      removeItem: () => {},
     }
     expect(() => createSaver(failing, key, 300).saveNow(snap(1))).not.toThrow()
+  })
+})
+
+describe('shared files and scenario choice (SoT §3.7)', () => {
+  const tabs = { openFiles: ['hub.py', 'main.py', 'gone.py'], activeFile: 'hub.py' }
+  const saved = () => memory({ [key]: JSON.stringify(snapshot(scenario, { choices: [] }, {}, tabs, new Date(0))) })
+
+  it('keeps tabs of shared files next to the scenario files, and only those (both directions)', () => {
+    expect(restore(saved(), scenario, fresh, ['hub.py']).workspace).toEqual({ openFiles: ['hub.py', 'main.py'], activeFile: 'hub.py' })
+    expect(restore(saved(), scenario, fresh).workspace).toEqual({ openFiles: ['main.py'], activeFile: 'main.py' })
+  })
+
+  it('remembers the chosen id and reads back only known ids', () => {
+    const store = memory()
+    choose(store, 'mini', false)
+    expect(store.data[ACTIVE_KEY]).toBe('mini')
+    expect(readActive(store, ['mini'])).toBe('mini')
+    expect(readActive(store, ['other'])).toBeNull()
+    expect(readActive(memory(), ['mini'])).toBeNull()
+  })
+
+  it('deletes only the chosen scenario save on restart, and keeps it otherwise', () => {
+    const other = saveKey('other')
+    const keep = memory({ [key]: 'x', [other]: 'y' })
+    choose(keep, 'mini', false)
+    expect(keep.data[key]).toBe('x')
+    const wipe = memory({ [key]: 'x', [other]: 'y' })
+    choose(wipe, 'mini', true)
+    expect(wipe.data[key]).toBeUndefined()
+    expect(wipe.data[other]).toBe('y')
+  })
+
+  it('never throws when storage is blocked', () => {
+    const blocked: KeyValueStore = {
+      getItem: () => {
+        throw new Error('blocked')
+      },
+      setItem: () => {
+        throw new Error('blocked')
+      },
+      removeItem: () => {
+        throw new Error('blocked')
+      },
+    }
+    expect(readActive(blocked, ['mini'])).toBeNull()
+    expect(() => choose(blocked, 'mini', true)).not.toThrow()
+    expect(readActive(null, ['mini'])).toBeNull()
   })
 })
