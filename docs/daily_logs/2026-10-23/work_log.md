@@ -141,6 +141,8 @@
 
 테스트 152개, lint·build 통과.
 
+최종 검증(합격): [`../../verifications/2026-10-23/keyboard_only_play_final.md`](../../verifications/2026-10-23/keyboard_only_play_final.md). 남은 F-N1(CRLF 수정을 잠그는 테스트 없음)은 CRLF 템플릿 테스트를 추가해 반영했다(옛 분리 방식으로 되돌리면 실패하는 것을 확인).
+
 ## 결정
 
 - Owner 합의(v0.7): 사건 파일 순번, 다음 파일 안내 함수. 안내 문구는 작업자 위임.

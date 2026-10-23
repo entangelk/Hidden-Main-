@@ -151,6 +151,11 @@ describe('validateScenario', () => {
     expect(problems.filter((p) => p.includes('run hint'))).toEqual([])
   })
 
+  it('accepts the run hint in a template saved with CRLF line endings', () => {
+    const problems = problemsOf((s) => s.stages.forEach((st) => (st.template = st.template.replace(/\n/g, '\r\n'))))
+    expect(problems.filter((p) => p.includes('run hint'))).toEqual([])
+  })
+
   it('flags a directive left outside a function and a nested def', () => {
     const broken = structuredClone(miniScenario)
     broken.stages[1].template = '# @if x == 1\n# @end\n' + broken.stages[1].template.replace(
