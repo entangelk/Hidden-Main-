@@ -1,6 +1,6 @@
 # 데이터 계약
 
-> 상태: **v0.5** · 2026-10-22 · 상위 기준: [`../SOT.md`](../SOT.md), [`00_overview.md`](00_overview.md)
+> 상태: **v0.6** · 2026-10-23 · 상위 기준: [`../SOT.md`](../SOT.md), [`00_overview.md`](00_overview.md)
 > 작성 규칙: [`../guides/data-contracts.md`](../guides/data-contracts.md), [`../guides/api-and-persistence-schemas.md`](../guides/api-and-persistence-schemas.md)
 > 정본 코드: 엔진 계약은 `src/engine/types.ts`, `SaveSnapshot`·`WorkspaceView`·`KeyValueStore`는 `src/persistence/save.ts`. 이 문서와 코드가 다르면 이 문서를 고친다.
 
@@ -18,6 +18,8 @@
 | `PlayerEdits` | EditorPane (플레이어) | 편집 이벤트만 | 플레이 전체 | 함 |
 | `WorkspaceView` (열린 탭, 활성 파일) | UI (App이 상태로 보관) | UI만 | 플레이 전체 | 함 (새로고침 후 탭 복원, SoT §3.6). 타입은 저장 형식의 일부라 `persistence/`에 선언 |
 | `SaveSnapshot` | Persistence 어댑터 | 어댑터만 | 저장소 | localStorage |
+| 고른 시나리오 id | App(`main.py` 실행) | `choose()`만 | 브라우저 | localStorage `incident-workspace:active` (SoT §3.7) |
+| `main.py` 값(`scenario`, `restart`) | EditorPane (플레이어) | 편집 이벤트만 | 작업 공간이 열려 있는 동안 | 안 함 |
 
 ---
 
@@ -42,8 +44,10 @@ ideation §6.2의 Stage/Scene를 정리한 것이다.
 ```ts
 type Scenario = {
   id: string;                 // 예: "incident-0214"
+  title: string;              // main.py 시나리오 목록의 제목
+  summary: string;            // 그 아래 한 줄 소개
   version: number;            // 시나리오 내용 변경 시 증가 (저장 호환성 판단에 사용)
-  initialFiles: StaticFile[]; // main.py, 설정 파일 등 처음부터 보이는 비스테이지 파일
+  initialFiles: StaticFile[]; // 설정 파일 등 처음부터 보이는 비스테이지 파일. main.py는 앱 소유라 넣지 않는다
   stages: Stage[];
   scenes: Scene[];            // 모든 사건을 한 번씩. 스테이지는 sceneIds로 참조만 한다
   endings: Ending[];
@@ -54,7 +58,7 @@ type StaticFile = { path: string; content: string };
 
 type Stage = {
   id: StageId;
-  filePath: string;           // 예: "incidents/security_audit.py"
+  filePath: string;           // 예: "incidents/02_security_audit.py"
   template: string;           // .py 원문 (?raw import). 사건 함수 블록 단위로 나뉘어 진행에 따라 추가됨 (DB-03)
   sceneIds: SceneId[];        // 파일 안 사건 순서
 };
@@ -93,6 +97,7 @@ type Ending = { id: EndingId; log: LogLine[] };  // 엔딩 도달 시 Terminal �
 ```
 
 - 전이 그래프는 앞으로만 간다: `next.scene`은 아직 도달하지 않은 사건이어야 한다(되돌아가는 루프 없음). 이미 도달한 사건으로 돌아가면 해결된 값과 공개 알림이 다시 처리되므로, P04 시나리오 검증 테스트가 막는다.
+- 파일 단위로도 앞으로만 간다: `next.scene`의 스테이지는 지금 스테이지이거나 `stages` 목록에서 뒤에 있어야 한다(시나리오 검증, 아키텍처 §5.2 — 떠난 파일의 `next_file()` 안내와 파일 순번이 이 규칙에 기댄다).
 - 템플릿 줄바꿈은 LF로 다룬다. 저장소는 `.gitattributes`로 `.py`를 LF로 고정하고, 엔진도 렌더 전에 CRLF를 LF로 바꾼다.
 - `description`(ideation)은 별도 필드로 두지 않는다. 주석은 `template` 안에 이미 있는 텍스트이므로 같은 이야기를 두 곳에 쓰지 않는다. 선택에 따른 주석 변형은 템플릿 안의 표시 블록 + 조건으로 표현한다. MVP 범위는 새로 추가되는 사건 함수에 한정한다(DB-01).
 - 기본값(`action = 1` 같은 초기 값)도 템플릿 텍스트가 정본이다. `EditableField`에 기본값을 따로 두지 않는다.
@@ -219,7 +224,7 @@ type WorkspaceView = {
 };
 ```
 
-- 복원 시 보이는 파일(`DerivedState.files`의 키)에 없는 경로는 버린다. `activeFile`이 버려졌으면 남은 첫 탭, 없으면 `null`. 남은 탭이 하나도 없으면 시작 사건의 파일 하나를 연 처음 화면으로 돌아간다.
+- 복원 시 보이는 파일(`DerivedState.files`의 키와 공용 파일 `main.py`)에 없는 경로는 버린다. `activeFile`이 버려졌으면 남은 첫 탭, 없으면 `null`. 남은 탭이 하나도 없으면 시나리오를 처음 고른 화면(`main.py`와 시작 사건의 파일, 시작 파일이 활성)으로 돌아간다. `main.py`에서 시나리오를 고른 경우에는 복원 뒤 현재 사건의 파일을 열고 활성으로 한다(SoT §3.7).
 
 ---
 
@@ -237,7 +242,8 @@ type SaveSnapshot = {
 };
 ```
 
-- 키: `incident-workspace:save:<scenarioId>` (시나리오별 1슬롯).
+- 키: `incident-workspace:save:<scenarioId>` (시나리오별 1슬롯). 고른 시나리오 id는 `incident-workspace:active`에 따로 둔다. `restart = True`로 고르면 그 시나리오의 슬롯만 지운다(SoT §3.7).
+- 시나리오를 바꾸기 직전에 지금 시나리오를 즉시 저장한다(같은 시나리오를 restart로 고를 때는 저장 뒤에 지워야 하므로 이 순서가 계약이다).
 - 저장 시점: 실행 성공 직후, 편집·탭 변경 시(디바운스), 그리고 페이지를 떠날 때(`pagehide`)에는 App이 ref에 동기 기록해 둔 최신 진행·편집 값으로 즉시 저장한다(디바운스 대기분을 쓰지 않는다 — 입력 직후의 새로고침에서는 디바운스 예약 자체가 아직 안 됐을 수 있다). 그래서 새로고침 직전의 편집도 복원된다. 실행 실패 시에는 진행 상태를 바꾸지 않으므로 그로 인한 저장도 없다.
 - 복원 규칙:
   - JSON 파싱 실패, `schemaVersion` 불일치, 또는 JSON이지만 모양이 계약과 다름(선택이 객체가 아님, `values`가 값 객체가 아님, 탭 목록이 문자열 배열이 아님 등) → 저장을 버리고 새 게임. Terminal에 한 줄 안내. 복원은 어떤 저장 내용에도 예외를 던지지 않는다(던지면 첫 화면이 비고, 저장이 남아 있어 새로고침해도 계속 빈다).
@@ -257,4 +263,6 @@ type SaveSnapshot = {
 | `ParseError.kind` | `engine/types.ts` | 없음 (Terminal 문구는 `kind`에서 만듦) |
 | 선택지 기본값 | 시나리오 `.py` 템플릿 텍스트 | `ValueSlot.defaultLiteral` (Engine이 템플릿에서 읽은 투영, 저장 안 함) |
 | 허용 값·범위 | `Scene.editableFields` | 템플릿 주석(사람용 설명) — 시나리오 검증 테스트로 일치 확인 (P04) |
-| 저장 키 접두사, `schemaVersion` | `persistence/` | 없음 |
+| 저장 키 접두사, `schemaVersion`, 고른 시나리오 키 | `persistence/` | 없음 |
+| 시나리오 목록·순서 | `scenario/index.ts`의 `scenarios` | `main.py` 목록(앱이 매번 생성, 저장 안 함) |
+| `main.py` 필드(`scenario` 허용값 = 1..시나리오 수, `restart`) | `app/hub/hub.ts`의 `hubFields` | `main.py` 템플릿 주석 |

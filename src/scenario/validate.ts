@@ -3,7 +3,7 @@
 import { holds } from '../engine/condition'
 import { derive } from '../engine/derive'
 import { parse } from '../engine/parser'
-import { DIRECTIVE, parseIf } from '../engine/render'
+import { DIRECTIVE, HANDOFF_FUNCTION, parseIf } from '../engine/render'
 import { findValueSlots, functionBlock } from '../engine/slots'
 import type { Choice, EditableField, Scenario, Scene, Value } from '../engine/types'
 
@@ -149,6 +149,7 @@ export function staticProblems(scenario: Scenario): string[] {
     const t = st.template
     if (t.includes('\t')) problems.push(`${st.filePath}: tab character`)
     if (t.includes('"""') || t.includes("'''")) problems.push(`${st.filePath}: triple-quoted string`)
+    if (functionBlock(t, HANDOFF_FUNCTION)) problems.push(`${st.filePath}: ${HANDOFF_FUNCTION}() is reserved for the engine`)
     const order = st.sceneIds.map((id) => scenario.scenes.find((s) => s.id === id)?.functionName ?? '?')
     const positions = order.map((fn) => functionBlock(t, fn)?.[0] ?? -1)
     if (positions.includes(-1)) problems.push(`${st.filePath}: scene function missing (${order.join(', ')})`)
@@ -200,6 +201,19 @@ export function staticProblems(scenario: Scenario): string[] {
     return cyclic
   }
   if (scenario.scenes.some((s) => visit(s.id))) problems.push('transition graph has a cycle')
+  // Files go forward too: a left file keeps its next_file() pointer and its number (architecture §5.2).
+  const stageIndex = (id: string) => {
+    const scene = scenario.scenes.find((x) => x.id === id)
+    return scene ? scenario.stages.findIndex((st) => st.id === scene.stageId) : -1
+  }
+  for (const s of scenario.scenes) {
+    const back = new Set(
+      s.transitions.flatMap((t) =>
+        'scene' in t.next && stageIndex(t.next.scene) !== -1 && stageIndex(t.next.scene) < stageIndex(s.id) ? [t.next.scene] : [],
+      ),
+    )
+    for (const to of back) problems.push(`${s.id}: goes back to an earlier stage file (${to})`)
+  }
 
   // Dead content: a comment variant on a flag nothing sets, or a flag nothing reads.
   const setFlags = new Set(scenario.scenes.flatMap((s) => s.transitions.flatMap((t) => t.effects.map((e) => e.flag))))

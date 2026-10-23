@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import type { Scenario } from '../engine/types'
 import { incident0214 } from './incident-0214'
 import { miniScenario } from './mini'
+import { thermalDrift } from './thermal-drift'
+import { unloggedRun } from './unlogged-run'
 import { validateScenario } from './validate'
 
 describe('validateScenario', () => {
@@ -19,6 +21,16 @@ describe('validateScenario', () => {
     // Exhaustive play grows with every flag; keep an eye on it (8,650 states at version 3).
     expect(exploration.states).toBeLessThan(20_000)
   }, 60_000) // exhaustive play over every distinct (scene, flags) state takes a few seconds
+
+  it.each([
+    [thermalDrift.title, thermalDrift, ['patched', 'traced']],
+    [unloggedRun.title, unloggedRun, ['erased', 'preserved']],
+  ] as const)('passes %s: every scene and both endings reachable, all screens clean', (_, scenario, endings) => {
+    const { problems, exploration } = validateScenario(scenario)
+    expect(problems).toEqual([])
+    expect([...exploration.endings].sort()).toEqual(endings)
+    expect(exploration.reachedScenes.size).toBe(scenario.scenes.length)
+  })
 
   it('reports broken data and templates (the checks bite)', () => {
     const broken = structuredClone(miniScenario)
@@ -58,6 +70,9 @@ describe('validateScenario', () => {
     ['unreachable scene', (s) => s.scenes[0].transitions.forEach((t) => (t.next = { scene: 'report' })), 'contain: unreachable'],
     ['@if on a flag nothing sets', (s) => (s.stages[1].template = s.stages[1].template.replace('@if isolated', '@if isolatd')), 'incidents/report.py: @if on flag "isolatd" that no transition sets'],
     ['flag never read', (s) => s.scenes[1].transitions[1].effects.push({ flag: 'unused', value: 1 }), 'flag "unused" is set but never read'],
+    // Listing report.py first makes contain → report a move back to an earlier file, with no scene cycle.
+    ['back to an earlier file', (s) => s.stages.reverse(), 'contain: goes back to an earlier stage file (report)'],
+    ['reserved next_file()', (s) => (s.stages[1].template += '\n    def next_file(self):\n        pass\n'), 'incidents/report.py: next_file() is reserved for the engine'],
     ['missing function', (s) => (s.stages[1].template = s.stages[1].template.replace('def write_report', 'def write_rep0rt')), 'incidents/report.py: scene function missing (write_report)'],
     ['field without a literal slot', (s) => (s.stages[1].template = s.stages[1].template.replace('        action = 1\n', '        action = int("1")\n')), 'report: a field has no literal slot (default must be a plain literal)'],
     ['string option not explained', (s) => {

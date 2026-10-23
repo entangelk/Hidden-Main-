@@ -31,6 +31,8 @@ function replay(scenario: Scenario, choices: Choice[]): Replay {
   const log: LogLine[] = []
   const reached = new Map<SceneId, SceneRender>()
   const unlocked = new Set<string>()
+  /** File play has left → the file it moved on to (forward-only, so at most one each). */
+  const handoffs = new Map<string, string>()
 
   const reach = (id: SceneId, announce: boolean) => {
     const scene = scenes.get(id)!
@@ -64,6 +66,9 @@ function replay(scenario: Scenario, choices: Choice[]): Replay {
       log.push(...(scenario.endings.find((e) => e.id === next.ending)?.log ?? []))
     } else {
       currentSceneId = next.scene
+      const from = stageOf(scene).filePath
+      const to = stageOf(scenes.get(next.scene)!).filePath
+      if (to !== from) handoffs.set(from, to)
       reach(next.scene, true)
     }
   }
@@ -77,6 +82,7 @@ function replay(scenario: Scenario, choices: Choice[]): Replay {
       stage.sceneIds.map((id) => scenes.get(id)!),
       reached,
       currentSceneId,
+      handoffs.get(stage.filePath) ?? null,
     )
   }
   return { currentSceneId, flags, ending, log, files, validCount }

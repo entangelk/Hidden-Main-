@@ -88,6 +88,8 @@ describe('derive — solved values and flag timing', () => {
   // A small inline scenario where a flag changes after a scene is shown and is set twice.
   const timing: Scenario = {
     id: 't',
+    title: 't',
+    summary: '',
     version: 1,
     initialFiles: [],
     stages: [
@@ -148,6 +150,33 @@ describe('derive — solved values and flag timing', () => {
   it('a later effect overwrites an earlier value of the same flag', () => {
     expect(derive(timing, at(c('a', { x: 1 }))).flags.level).toBe(1)
     expect(derive(timing, at(c('a', { x: 1 }), c('b', { x: 1 }))).flags.level).toBe(2)
+  })
+})
+
+describe('derive — pointer to the next file (architecture §5.2)', () => {
+  const left = at(c('triage', { action: 1 }), c('contain', { isolate: true }))
+
+  it('adds next_file() below the last function of the file play just left, pointing at the new file', () => {
+    const main = derive(scenario, left).files['main.py'].text
+    expect(main).toContain('    def next_file(self):\n')
+    expect(main).toContain('return "incidents/report.py"')
+    // Inside the class, right after contain(), before the module code at the bottom.
+    expect(main.indexOf('return monitor.contain(isolate)')).toBeLessThan(main.indexOf('def next_file'))
+    expect(main.indexOf('def next_file')).toBeLessThan(main.indexOf('if __name__'))
+    expect(main).toMatch(/return monitor\.contain\(isolate\)\n\n    def next_file/)
+  })
+
+  it('does not add it while play is still in the file, nor to the file play moved into, nor at an ending', () => {
+    expect(derive(scenario, at(c('triage', { action: 1 }))).files['main.py'].text).not.toContain('next_file')
+    expect(derive(scenario, left).files['incidents/report.py'].text).not.toContain('next_file')
+    const ended = derive(scenario, at(...left.choices, c('report', { action: 1 })))
+    expect(ended.files['incidents/report.py'].text).not.toContain('next_file')
+    expect(ended.files['main.py'].text.match(/def next_file/g)).toHaveLength(1)
+  })
+
+  it('leaves the new file\'s slots where they are', () => {
+    const view = derive(scenario, left).files['incidents/report.py']
+    expect(view.valueSlots.map((s) => view.text.slice(s.start, s.end))).toEqual(['1'])
   })
 })
 

@@ -66,15 +66,32 @@ export type SceneRender = {
   solved?: Choice
 }
 
+/** Name of the engine-made function that points to the next file; templates must not use it. */
+export const HANDOFF_FUNCTION = 'next_file'
+
+/** The pointer added to a stage file once play has moved on to `nextFile` (architecture §5.2). */
+export function handoffBlock(indent: string, nextFile: string): string {
+  return [
+    `${indent}def ${HANDOFF_FUNCTION}(self):`,
+    `${indent}    # 이 파일의 사건은 여기까지다.`,
+    `${indent}    # 다음 사건 파일이 생성됐다: ${nextFile}`,
+    `${indent}    # 왼쪽 Explorer에서 그 파일을 열어 이어서 진행한다.`,
+    '',
+    `${indent}    return "${nextFile}"`,
+  ].join('\n')
+}
+
 /**
  * The stage file as the player sees it before their own edits (architecture §5): only reached
- * scene functions, comment variants resolved, solved values fixed, the current scene's slots.
+ * scene functions, comment variants resolved, solved values fixed, the current scene's slots, and
+ * the pointer to `handoffTo` once play has left this file for it.
  */
 export function renderStage(
   stage: Stage,
   scenes: Scene[],
   reached: Map<SceneId, SceneRender>,
   currentSceneId: SceneId | null,
+  handoffTo: string | null,
 ): FileView {
   // Offsets and directives assume LF; a template saved with CRLF must render the same.
   let text = stage.template.replace(/\r\n?/g, '\n')
@@ -105,5 +122,14 @@ export function renderStage(
     return findValueSlots(text, scene.id, scene.functionName, scene.editableFields)
   })
   const view = applyEdits({ text, valueSlots: slots.sort((a, b) => a.start - b.start) }, fixed)
-  return { text: view.text, valueSlots: view.valueSlots.filter((s) => s.sceneId === currentSceneId) }
+  let shown = view.text
+  if (handoffTo !== null) {
+    // Right below the last reached scene function, at its indent: after every slot, so no offset
+    // moves, and inside the same class even when module code follows.
+    const last = scenes.filter((s) => reached.has(s.id)).at(-1)!
+    const [start, end] = functionBlock(shown, last.functionName)!
+    const indent = shown.slice(start).match(/^ */)![0]
+    shown = `${shown.slice(0, end)}\n\n${handoffBlock(indent, handoffTo)}${shown.slice(end)}`
+  }
+  return { text: shown, valueSlots: view.valueSlots.filter((s) => s.sceneId === currentSceneId) }
 }

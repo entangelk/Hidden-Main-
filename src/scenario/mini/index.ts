@@ -7,6 +7,8 @@ import settingsPy from './settings.py?raw'
 
 export const miniScenario = {
   id: 'mini',
+  title: 'Mini',
+  summary: '엔진 테스트용 소형 시나리오.',
   version: 1,
   initialFiles: [{ path: 'config/settings.py', content: settingsPy }],
   stages: [
