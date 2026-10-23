@@ -195,6 +195,8 @@ export function staticProblems(scenario: Scenario): string[] {
       problems.push(`${scene.id}: miss transition without attempts`)
     }
     if (misses && misses === scene.transitions.length) problems.push(`${scene.id}: every transition is a miss`)
+    // A miss is "nothing found": effects would apply only on the last run, which reads as a trap.
+    if (scene.transitions.some((t) => t.miss && t.effects.length)) problems.push(`${scene.id}: a miss transition sets flags`)
     for (const t of scene.transitions) {
       if ('scene' in t.next && !sceneIds.has(t.next.scene)) problems.push(`${scene.id}: unknown next scene ${t.next.scene}`)
       if ('ending' in t.next && !endingIds.has(t.next.ending)) problems.push(`${scene.id}: unknown ending ${t.next.ending}`)

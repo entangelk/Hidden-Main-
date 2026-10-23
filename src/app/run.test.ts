@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { derive } from '../engine/derive'
-import type { Progress } from '../engine/types'
+import type { Progress, Scenario } from '../engine/types'
 import { miniScenario as scenario } from '../scenario/mini'
 import { runScene } from './run'
 
@@ -52,6 +52,18 @@ describe('runScene', () => {
     expect(text(runScene(scenario, ended, {}, 'incidents/report.py'))).toEqual(['처리할 사건이 없습니다.'])
     // Before play leaves, main.py has no pointer and runs its scene.
     expect(runScene(scenario, start, {}, 'main.py').open).toBeUndefined()
+  })
+
+  it('clears the edits of a scene it moved past, and keeps them after a miss (SoT §3.8)', () => {
+    expect(runScene(scenario, start, { triage: { action: '2' } }, 'main.py').cleared).toBe('triage')
+    const search: Scenario = structuredClone(scenario)
+    search.scenes[0].attempts = 2
+    search.scenes[0].transitions[2].miss = true
+    const first = runScene(search, start, { triage: { action: '3' } }, 'main.py')
+    expect(first.progress?.choices).toHaveLength(1)
+    expect(first.cleared).toBeUndefined()
+    // The last run takes the miss and moves on, so its edits are cleared then.
+    expect(runScene(search, first.progress!, { triage: { action: '3' } }, 'main.py').cleared).toBe('triage')
   })
 
   it('runs a later function of the same file once it is current', () => {

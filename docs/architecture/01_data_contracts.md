@@ -79,7 +79,7 @@ type EditableField =
   | { name: string; type: "string"; options: string[] };
 
 type Transition = {
-  miss?: true;                // 탐색형 사건의 '못 찾음': 기회가 남았으면 로그만 남기고 같은 사건에 머문다. 마지막 기회에는 보통 전이처럼 적용
+  miss?: true;                // 탐색형 사건의 '못 찾음': 기회가 남았으면 로그만 남기고 같은 사건에 머문다. 마지막 기회에는 보통 전이처럼 적용. effects는 비워 둔다(시나리오 검증)
   when: Condition;            // 이번 선택 값과 플래그에 대한 조건
   effects: Effect[];          // 플래그 설정
   log: LogLine[];             // Terminal 출력

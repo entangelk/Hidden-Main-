@@ -248,14 +248,13 @@ function Workspace({ storage, scenario, intro, onChoose }: WorkspaceProps) {
     say(result.lines)
     if (result.open) return open(result.open)
     if (!result.progress) return
-    const solved = result.progress.choices.at(-1)!.sceneId
     progressRef.current = result.progress
     setProgress(result.progress)
-    // A miss keeps the scene current: leave the typed value for the next try (SoT §3.8).
-    if (derive(scenario, result.progress).currentSceneId === solved) return
+    const { cleared } = result
+    if (!cleared) return // a miss: the typed value stays for the next try (SoT §3.8)
     updateEdits((prev) => {
       const rest = { ...prev }
-      delete rest[solved]
+      delete rest[cleared]
       return rest
     })
   }, [activeFile, scenario, runMain, say, open, updateEdits])

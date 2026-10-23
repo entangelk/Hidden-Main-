@@ -19,7 +19,7 @@ export const thermalDrift = {
   id: 'thermal-drift',
   title: 'Thermal Drift',
   summary: '토요일 새벽, 서버실 R열 온도가 멈추지 않고 오른다.',
-  version: 1,
+  version: 2,
   initialFiles: [{ path: 'config/facility.py', content: facilityPy }],
   stages: [
     { id: 's1', filePath: 'cooling/01_temp_alarm.py', template: tempAlarmPy, sceneIds: ['alarm', 'unit'] },

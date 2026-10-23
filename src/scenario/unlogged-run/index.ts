@@ -20,7 +20,7 @@ export const unloggedRun = {
   id: 'unlogged-run',
   title: 'Unlogged Run',
   summary: '연구소 자동화 스케줄러가 기록에 없는 실험을 돌리고 있다.',
-  version: 1,
+  version: 2,
   initialFiles: [{ path: 'config/lab.py', content: labPy }],
   stages: [
     { id: 's1', filePath: 'lab/01_scheduler.py', template: schedulerPy, sceneIds: ['queue', 'owner'] },

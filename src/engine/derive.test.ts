@@ -220,7 +220,10 @@ describe('derive — retries in a search scene (SoT §3.8)', () => {
   it('ignores miss on a scene without attempts (it then advances at once)', () => {
     const plain: Scenario = structuredClone(scenario)
     plain.scenes[0].transitions[2].miss = true
-    expect(derive(plain, at(miss)).currentSceneId).toBe('contain')
+    const st = derive(plain, at(miss))
+    expect(st.currentSceneId).toBe('contain')
+    expect(st.missesOnCurrent).toBe(0)
+    expect(st.log.some((l) => l.text.includes('기회'))).toBe(false)
   })
 
   it('replays a save with misses the same way (apply accepts the retry)', () => {

@@ -22,7 +22,7 @@ export const incident0214 = {
   id: 'incident-0214',
   title: 'Incident 02:14',
   summary: '새벽 02:14, 서버 db-07이 외부로 대량의 데이터를 보낸다.',
-  version: 4,
+  version: 5,
   initialFiles: [
     { path: 'config/settings.py', content: settingsPy },
   ],

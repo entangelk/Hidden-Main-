@@ -18,7 +18,7 @@ describe('validateScenario', () => {
     expect(problems).toEqual([])
     expect([...exploration.endings].sort()).toEqual(['resolved', 'sealed'])
     expect(exploration.reachedScenes.size).toBe(incident0214.scenes.length)
-    // Exhaustive play grows with every flag; keep an eye on it (8,650 states at version 3).
+    // Exhaustive play grows with every flag; keep an eye on it (9,388 states at version 5).
     expect(exploration.states).toBeLessThan(20_000)
   }, 60_000) // exhaustive play over every distinct (scene, flags) state takes a few seconds
 
@@ -87,6 +87,11 @@ describe('validateScenario', () => {
       s.scenes[1].attempts = 2
       s.scenes[1].transitions[1].miss = true
     }, 'contain: comments do not say 기회는 2번'],
+    ['miss with effects', (s) => {
+      s.scenes[1].attempts = 2
+      s.scenes[1].transitions[1].miss = true
+      s.scenes[1].transitions[1].effects = [{ flag: 'isolated', value: true }]
+    }, 'contain: a miss transition sets flags'],
     ['every transition a miss', (s) => {
       s.scenes[1].attempts = 2
       s.scenes[1].transitions.forEach((t) => (t.miss = true))

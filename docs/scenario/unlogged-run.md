@@ -1,6 +1,6 @@
 # 시나리오 — *Unlogged Run*
 
-> 상태: v1 (시나리오 `version: 1`) · 2026-10-23 · 코드: `src/scenario/unlogged-run/`
+> 상태: v2 (시나리오 `version: 2`) · 2026-10-23 · 코드: `src/scenario/unlogged-run/`
 > 상위 기준: [`../SOT.md`](../SOT.md) §3.7, [`../architecture/01_data_contracts.md`](../architecture/01_data_contracts.md) §3
 
 ## 줄거리
@@ -38,6 +38,8 @@
 | chamber (`chamber`) | 2번 | 4가 아닌 챔버 |
 | project (`project`) | 2번 | "LUMEN"이 아닌 프로젝트 |
 
+- v2: 이 다시 시도 규칙 때문에 버전을 올렸다. v1 저장에서 이 사건들을 못 찾고 넘어간 기록은 그 사건까지만 이어지고, "시나리오가 바뀌어 일부 진행을 되돌렸습니다" 안내가 나온다.
+
 ## 선택에 따라 달라지는 주석
 
 | 사건 | 조건 플래그 | 내용 |
@@ -58,4 +60,4 @@
 
 ## 검증
 
-`src/scenario/validate.test.ts`가 모든 (사건, 플래그) 상태(214개)를 탐색해 *Incident 02:14*와 같은 규칙을 확인한다([`incident-0214.md`](incident-0214.md) §검증).
+`src/scenario/validate.test.ts`가 모든 (사건, 플래그) 상태(247개)를 탐색해 *Incident 02:14*와 같은 규칙을 확인한다([`incident-0214.md`](incident-0214.md) §검증).

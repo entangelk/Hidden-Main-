@@ -1,7 +1,7 @@
 import { apply, derive } from '../engine/derive'
 import { parse } from '../engine/parser'
 import { applyEdits } from '../engine/slots'
-import type { EditableField, FileView, LogLine, ParseError, PlayerEdits, Progress, Scenario } from '../engine/types'
+import type { EditableField, FileView, LogLine, ParseError, PlayerEdits, Progress, Scenario, SceneId } from '../engine/types'
 import { parseErrorLine } from './terminalMessages'
 
 export type RunResult = {
@@ -11,6 +11,8 @@ export type RunResult = {
   progress?: Progress
   /** Set when the run was in a left file: the file its next_file() points to, to open. */
   open?: string
+  /** The scene the run moved past, whose edits are done with. Unset after a miss (SoT §3.8). */
+  cleared?: SceneId
 }
 
 const lineOf = (text: string, offset: number) => text.slice(0, offset).split('\n').length
@@ -68,5 +70,7 @@ export function runScene(
   if (!result.ok) return { lines: failureLines(file, view, edits, scene.editableFields, scene.functionName, result.errors) }
   const next = apply(scenario, progress, result.choice)
   // apply only refuses what parse already rejects; if they ever disagree, change nothing.
-  return next === progress ? { lines: [] } : { lines: [], progress: next }
+  if (next === progress) return { lines: [] }
+  // A miss with runs left keeps the scene current: the typed value stays for the next try.
+  return derive(scenario, next).currentSceneId === scene.id ? { lines: [], progress: next } : { lines: [], progress: next, cleared: scene.id }
 }
