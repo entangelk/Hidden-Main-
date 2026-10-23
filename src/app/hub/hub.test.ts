@@ -14,6 +14,13 @@ describe('hubView', () => {
     expect(text).not.toContain('{scenarios}')
   })
 
+  it('inserts titles literally, even with replacement patterns or the preset line in them', () => {
+    const odd: Scenario[] = [{ ...miniScenario, title: "$& $' $1", summary: 'scenario = 1' }, two[1]]
+    const view = hubView(odd, ['new', 'new'], 'mini-2')
+    expect(view.text).toContain("    #   1. $& $' $1 — scenario = 1 [새 게임]")
+    expect(view.valueSlots.map((s) => view.text.slice(s.start, s.end))).toEqual(['2', 'False'])
+  })
+
   it('preselects the open scenario, or 1 when none is open', () => {
     const shown = (activeId: string | null) => {
       const view = hubView(two, ['new', 'new'], activeId)

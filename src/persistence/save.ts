@@ -150,6 +150,12 @@ export function createSaver(store: KeyValueStore | null, key: string, delayMs: n
       flush()
     },
     flush,
+    /** Drops a scheduled snapshot without writing it. */
+    cancel() {
+      if (timer !== null) clearTimeout(timer)
+      timer = null
+      pending = null
+    },
   }
 }
 

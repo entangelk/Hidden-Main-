@@ -35,8 +35,9 @@ export function hubView(scenarios: Scenario[], statuses: HubStatus[], activeId: 
   const preset = scenarios.findIndex((s) => s.id === activeId) + 1 || 1
   const text = template
     .replace(/\r\n?/g, '\n')
-    .replace('    # {scenarios}', list)
-    .replace('scenario = 1', `scenario = ${preset}`)
+    // Function replacers: a title with `$&` or similar must be inserted as is.
+    .replace('    # {scenarios}', () => list)
+    .replace(/^( +scenario = )1$/m, (_, head: string) => `${head}${preset}`)
   return { text, valueSlots: findValueSlots(text, HUB_SCENE, FUNCTION, hubFields(scenarios.length)) }
 }
 

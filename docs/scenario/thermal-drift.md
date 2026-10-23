@@ -36,6 +36,7 @@
 | --- | --- | --- |
 | unit | `mapped` | 뜨거운 곳이 R열이라는 단서(구역표는 `config/facility.py`) |
 | resume | `crac3_found`, `fans_max` | CRAC-3 점검 모드를 직접 찾았는지, 팬 최대가 소용없었다는 사실 |
+| override | `crac3_found` | 점검 모드를 켠 계정을 직접 확인했는지(아니면 "모드는 이 계정만 바꿀 수 있다"로 안내) |
 | power | `pattern_found` | 점검 모드 시간대에 R열 전력도 오른다는 단서 |
 | open | `rig_suspect` | R-17이 한도를 넘는 전력을 쓴다는 사실 |
 | report | `rig_found`, `pattern_found`, `cooling_resumed` | 보고서에 쓸 수 있는 사실, 냉각 복구 여부 |

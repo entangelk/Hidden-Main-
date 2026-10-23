@@ -165,6 +165,21 @@ describe('createSaver', () => {
     expect(store.data[key]).toBe('sentinel') // no second write from the cancelled timer
   })
 
+  it('cancel (workspace closed) drops a scheduled snapshot; later schedules still work', () => {
+    vi.useFakeTimers()
+    const store = memory()
+    const saver = createSaver(store, key, 300)
+    saver.schedule(snap(2))
+    saver.cancel()
+    vi.advanceTimersByTime(1000)
+    expect(store.data[key]).toBeUndefined() // no late write over a wiped save
+    saver.flush()
+    expect(store.data[key]).toBeUndefined() // nothing left pending
+    saver.schedule(snap(1))
+    vi.advanceTimersByTime(300)
+    expect(JSON.parse(store.data[key]).progress.choices).toHaveLength(1)
+  })
+
   it('saveNow writes at once; write failures are swallowed', () => {
     const store = memory()
     createSaver(store, key, 300).saveNow(snap(1))

@@ -21,7 +21,11 @@ class UnitControl:
         return crac.set_mode("CRAC-3", resume)
 
     def trace_override(self):
-        # 점검 모드를 켠 계정은 svc-facility(시설 관리 자동화 계정)다.
+        # @if crac3_found == True
+        # CRAC-3를 점검 모드로 바꾼 계정은 svc-facility(시설 관리 자동화 계정)다.
+        # @else
+        # 냉각 장치의 모드는 시설 관리 자동화 계정 svc-facility만 바꿀 수 있다.
+        # @end
         # 이 계정의 모드 변경 기록을 며칠 치 볼지 days 값에 넣는다. 1~30 사이의 숫자.
         # 기간이 길수록 반복되는 패턴이 보일 수 있다.
 

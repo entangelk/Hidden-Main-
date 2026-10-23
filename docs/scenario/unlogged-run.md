@@ -37,7 +37,7 @@
 | owner | `queue_read` | 작성자 칸이 비어 있으니 사람이 아니라 서비스 계정이라는 단서 |
 | chamber | `halted` | run-0을 멈추자 챔버 경보가 울렸다는 사실 |
 | samples | `chamber_found` | 4번 챔버의 'LMN' 용기 |
-| project | `owner_traced` | 등록 단말이 한서윤 박사의 것이라는 단서 |
+| project | `owner_traced`, `chamber_found` | 등록 단말이 2년 전 퇴사한 한서윤 박사의 것이라는 단서, 용기 라벨 'LMN'. 어느 경우든 "중단된 프로젝트일 수 있다, 목록은 `config/lab.py`" 안내 |
 | call | `lumen_found` | 폐기 완료 기록과 달리 시료가 살아 있다는 모순 |
 | decide | `samples_alive`, `testimony`, `director_told` | 시료 생존, 박사의 증언, 소장의 대기 |
 

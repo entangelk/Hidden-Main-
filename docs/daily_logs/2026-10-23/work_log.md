@@ -82,6 +82,24 @@
 - 새 시나리오: *Thermal Drift*(`cooling/`, 상태 190개), *Unlogged Run*(`lab/`, 상태 214개). 각 파일 3개·사건 7개·엔딩 2개, 검증기 첫 실행에서 문제 0건. 문서 `docs/scenario/thermal-drift.md`, `unlogged-run.md`.
 - 검증: 테스트 142개, lint·build 통과. 브라우저: 두 새 시나리오를 두 엔딩까지, 시나리오 간 이어하기(현재 사건 파일이 열림), 완료 시나리오 재선택 안내, restart 후 처음부터, 목록 상태 표시, 잘못된 번호 Traceback, 콘솔 오류 0건.
 
+### 8. 시나리오 선택 독립 검증(합격) 비차단 지적 보강
+
+기록: [`../../verifications/2026-10-23/scenario_hub_and_new_scenarios.md`](../../verifications/2026-10-23/scenario_hub_and_new_scenarios.md)
+
+| 지적 | 보강 |
+| --- | --- |
+| N1 *Unlogged Run* `check_project`가 아직 못 본 라벨 'LMN'을 언급 | 'LMN' 줄은 `chamber_found`일 때만. 공통으로 "중단된 프로젝트일 수 있다, 목록은 `config/lab.py`" 안내(R-07) |
+| N2 `make_call` 선택지가 "LUMEN 책임자"를 미리 알려 줌, `owner_traced` 경로에 LUMEN 단서 없음, `scan_samples` 문구 어색 | 선택지를 "2년 전 퇴사한 수석 연구원"으로, `owner_traced` 문구에 "떠날 무렵 끝난 프로젝트", 스캔 문구 수정 |
+| N3 *Thermal Drift* `trace_override`가 svc-facility를 모든 분기에서 사실로 단정 | `crac3_found`에 따라 "바꾼 계정은" / "모드는 이 계정만 바꿀 수 있다"로 |
+| N4 전환 안내가 Terminal 맨 위(기존 로그 앞)에 나옴 | 복원한 로그 다음에 붙임 |
+| N5 지금 시나리오를 다시 고르면 다시 열린다는 규칙이 SoT에 없음 | SoT §3.7에 명시 |
+| N6 닫힌 `Workspace`의 디바운스 타이머가 남음(지금은 즉시 저장 덕에 무해) | `saver.cancel()` 추가, 언마운트 시 호출 + 단위 테스트. 아키텍처 §3.1에 이유 기록 |
+| N7 데이터 계약 §8 "탭 없으면 시작 파일 하나" | `main.py` + 시작 파일, 고른 경우 현재 사건 파일로 수정 |
+| N8 SoT §8에 §3.7 등 누락 | 반영 |
+| N9 시나리오 문서 v4 설명, 작업 로그 번호 중복, R-08 줄 위치, `hub.ts`의 `String.replace` 치환 패턴 | 각각 수정. `hub.ts`는 함수 치환으로 바꾸고 `$&`가 든 제목 테스트 추가 |
+
+`App.tsx` 전환 로직의 컴포넌트 테스트는 이번에도 추가하지 않았다(테스트 기반 없음). 브라우저 스크립트와 단위 테스트(`choose` 순서·`cancel`)로 지킨다.
+
 ## 결정
 
 - Owner 합의(v0.7): 사건 파일 순번, 다음 파일 안내 함수. 안내 문구는 작업자 위임.
@@ -90,7 +108,6 @@
 
 ## 다음 단계
 
-1. 독립 검증 → 보강 → 재검증
+1. 재검증
 2. PR #3 갱신, Owner 병합, 배포 주소에서 확인
-2. PR 생성 후 Owner 병합, 배포 주소에서 확인
 3. Owner 플레이 테스트(AC-10, R-07) 계속

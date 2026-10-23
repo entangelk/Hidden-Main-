@@ -12,7 +12,7 @@ class Decision:
         #
         # 날이 밝기 전에 연락할 사람을 who 값에 넣는다. 큰따옴표까지 그대로 쓴다.
         #   "director" - 연구소장
-        #   "dr_han"   - 한서윤 박사 (LUMEN 책임자, 퇴사)
+        #   "dr_han"   - 한서윤 박사 (2년 전 퇴사한 수석 연구원)
         #   "nobody"   - 아무에게도 연락하지 않는다
 
         who = "nobody"

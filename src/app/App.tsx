@@ -119,10 +119,14 @@ function Workspace({ storage, scenario, intro, onChoose }: WorkspaceProps) {
   }, [])
   const [openFiles, setOpenFiles] = useState<string[]>(initial.workspace.openFiles)
   const [activeFile, setActiveFile] = useState<string | null>(initial.workspace.activeFile)
-  const [transient, setTransient] = useState<TransientLine[]>(() => [
-    ...intro.map((line) => ({ at: 0, line })),
-    ...(initial.notice ? [{ at: 0, line: { level: 'warn' as const, text: initial.notice } }] : []),
-  ])
+  // The main.py run that opened this scenario, and any restore notice, follow its restored log.
+  const [transient, setTransient] = useState<TransientLine[]>(() => {
+    const at = scenario ? derive(scenario, initial.progress).log.length : 0
+    return [
+      ...intro.map((line) => ({ at, line })),
+      ...(initial.notice ? [{ at, line: { level: 'warn' as const, text: initial.notice } }] : []),
+    ]
+  })
 
   const state = useMemo(() => (scenario ? derive(scenario, progress) : NO_STATE), [scenario, progress])
   const hub = useMemo(
@@ -182,6 +186,8 @@ function Workspace({ storage, scenario, intro, onChoose }: WorkspaceProps) {
     window.addEventListener('pagehide', saveLatest)
     return () => window.removeEventListener('pagehide', saveLatest)
   }, [saveLatest])
+  // A closed workspace must not write later: after a restart its save has just been wiped.
+  useEffect(() => () => saver?.cancel(), [saver])
 
   const onEdit = useCallback(
     (sceneId: SceneId, field: string, literal: string) => {
