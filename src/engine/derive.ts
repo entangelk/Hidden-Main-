@@ -48,6 +48,7 @@ function replay(scenario: Scenario, choices: Choice[]): Replay {
   reach(scenario.startSceneId, false)
 
   let validCount = 0
+  let missesOnCurrent = 0
   for (const choice of choices) {
     const scene: Scene | undefined = currentSceneId === null ? undefined : scenes.get(currentSceneId)
     if (!scene || choice.sceneId !== scene.id || !valuesFit(scene.editableFields, choice.values)) break
@@ -57,6 +58,17 @@ function replay(scenario: Scenario, choices: Choice[]): Replay {
     validCount++
 
     log.push(info(`$ python ${stageOf(scene).filePath}`), ...transition.log)
+    if (transition.miss && scene.attempts) {
+      const left = scene.attempts - (missesOnCurrent + 1)
+      if (left > 0) {
+        // Nothing found here: the scene stays current, nothing else changes (SoT §3.8).
+        missesOnCurrent++
+        log.push(info(`[workspace] ${scene.functionName}(): 남은 기회 ${left}번. 다른 값으로 다시 실행할 수 있다.`))
+        continue
+      }
+      log.push(info(`[workspace] ${scene.functionName}(): 기회를 다 썼다. 다음으로 넘어간다.`))
+    }
+    missesOnCurrent = 0
     flags = { ...flags, ...Object.fromEntries(transition.effects.map((e) => [e.flag, e.value])) }
     reached.set(scene.id, { ...reached.get(scene.id)!, solved: choice })
     const next: Transition['next'] = transition.next
@@ -85,7 +97,7 @@ function replay(scenario: Scenario, choices: Choice[]): Replay {
       handoffs.get(stage.filePath) ?? null,
     )
   }
-  return { currentSceneId, flags, ending, log, files, handoffs: Object.fromEntries(handoffs), validCount }
+  return { currentSceneId, flags, ending, log, files, handoffs: Object.fromEntries(handoffs), missesOnCurrent, validCount }
 }
 
 /** Everything the screen shows, rebuilt from the progress record (data contract §6). Pure. */

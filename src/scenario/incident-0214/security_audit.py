@@ -15,6 +15,7 @@ class SecurityAudit:
         #   "admin"  - 관리자 계정
         #   "backup" - 백업 전용 계정
         #   "guest"  - 방문자 계정
+        # 기회는 2번이다. 찾지 못하면 다른 값으로 다시 실행할 수 있다.
 
         window = "02:10-02:20"
 

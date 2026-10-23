@@ -31,6 +31,7 @@ class Scheduler:
         #   "svc-lab" - 자동화 스케줄러 서비스 계정
         #   "kim.jh"  - 야간 담당 연구원
         #   "admin"   - 시스템 관리자
+        # 기회는 2번이다. 찾지 못하면 다른 값으로 다시 실행할 수 있다.
 
         account = "kim.jh"
         # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.

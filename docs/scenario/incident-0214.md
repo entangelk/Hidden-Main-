@@ -44,6 +44,17 @@
 | report (`draft_report`) | `action` 1~2 | 1 이고 `device_found` → `truthful` / 1 이고 장치 못 찾음 → 사실만 기재 / 2 → "장애"로 정리 | submit |
 | submit (`submit_report`) | `recipient` "security"·"facility"·"archive" | `truthful` 이고 "archive"가 아님 → **resolved** / 그 외 → **sealed** | 엔딩 |
 
+## 다시 시도할 수 있는 사건 (SoT §3.8)
+
+| 사건 | 기회 | 못 찾음(miss) |
+| --- | --- | --- |
+| schedule (`hour`) | 3번 | 02시가 아닌 시간대 |
+| audit (`target`) | 2번 | "backup"이 아닌 계정 |
+| limit (`limit`) | 2번 | 30 초과 |
+| room (`room`) | 2번 | "B2-07"이 아닌 방 |
+
+마지막 기회까지 못 찾으면 표의 "그 외" 분기로 넘어간다. v3 저장에서 이 사건들을 못 찾고 넘어간 기록은 그 사건까지만 이어지고(남은 기회가 있으므로), 시나리오 버전 안내가 나온다.
+
 ## 선택에 따라 달라지는 주석 (DB-01)
 
 | 사건 | 조건 플래그 | 내용 |

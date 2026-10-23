@@ -84,9 +84,16 @@ export type Scene = {
   editableFields: EditableField[]
   /** First transition whose condition holds wins; the last one must have an empty condition. */
   transitions: Transition[]
+  /**
+   * Search scenes only (SoT §3.8): how many runs the player gets. A `miss` transition keeps the
+   * scene current until the last run, which then takes it like any other transition.
+   */
+  attempts?: number
 }
 
 export type Transition = {
+  /** A wrong place to look: with runs left, only its log is shown and the scene stays current. */
+  miss?: true
   when: Condition
   effects: Effect[]
   log: LogLine[]
@@ -125,4 +132,6 @@ export type DerivedState = {
   files: Record<string, FileView>
   /** File play has left → the file its next_file() points to (architecture §5.2). */
   handoffs: Record<string, string>
+  /** Runs already spent on the current scene by misses (0 when none or at an ending). */
+  missesOnCurrent: number
 }

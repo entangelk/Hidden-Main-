@@ -32,6 +32,7 @@ class IncidentMonitor:
         #
         # 예약 작업 목록을 시간 단위로 볼 수 있다.
         # hour 값을 0~23 사이의 정수(시)로 바꾸고 실행하면 그 시간대의 작업을 조회한다.
+        # 기회는 3번이다. 찾지 못하면 다른 값으로 다시 실행할 수 있다.
 
         hour = 0
         # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.

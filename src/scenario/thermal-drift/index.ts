@@ -43,10 +43,11 @@ export const thermalDrift = {
       id: 'unit',
       stageId: 's1',
       functionName: 'inspect_unit',
+      attempts: 2,
       editableFields: [{ name: 'unit', type: 'string', options: ['CRAC-1', 'CRAC-2', 'CRAC-3'] }],
       transitions: [
         { when: when('unit', 'CRAC-3'), effects: [{ flag: 'crac3_found', value: true }], log: [info('[crac] CRAC-3: 점검 모드, 냉각 0%. 03:00 변경, 변경자 svc-facility')], next: go('resume') },
-        { when: [], effects: [], log: [info('[crac] 정상 가동, 냉각 100%.')], next: go('resume') },
+        { miss: true, when: [], effects: [], log: [info('[crac] 정상 가동, 냉각 100%.')], next: go('resume') },
       ],
     },
     // ---- Stage 2: 02_unit_control.py — who switched it off ----
@@ -64,6 +65,7 @@ export const thermalDrift = {
       id: 'override',
       stageId: 's2',
       functionName: 'trace_override',
+      attempts: 2,
       editableFields: [{ name: 'days', type: 'number', min: 1, max: 30 }],
       transitions: [
         {
@@ -72,17 +74,18 @@ export const thermalDrift = {
           log: [info('[audit] 매주 토요일 03:00 점검 모드 → 06:00 해제. 6주째 반복.')],
           next: go('power'),
         },
-        { when: [], effects: [], log: [info('[audit] 오늘 03:00에 한 번. 그 전 기록은 조회 범위 밖이다.')], next: go('power') },
+        { miss: true, when: [], effects: [], log: [info('[audit] 오늘 03:00에 한 번. 그 전 기록은 조회 범위 밖이다.')], next: go('power') },
       ],
     },
     {
       id: 'power',
       stageId: 's2',
       functionName: 'check_power',
+      attempts: 2,
       editableFields: [{ name: 'rack', type: 'string', options: ['R-15', 'R-16', 'R-17'] }],
       transitions: [
         { when: when('rack', 'R-17'), effects: [{ flag: 'rig_suspect', value: true }], log: [info('[power] R-17: 9.8kW. 한도 6kW를 넘는다. 자산 대장에는 장비가 없다.')], next: go('open') },
-        { when: [], effects: [], log: [info('[power] 정상 범위.')], next: go('open') },
+        { miss: true, when: [], effects: [], log: [info('[power] 정상 범위.')], next: go('open') },
       ],
     },
     // ---- Stage 3: 03_rack_audit.py — what is in R-17 ----

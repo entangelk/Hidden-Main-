@@ -30,6 +30,14 @@
 | open (`open_rack`) | `action` 1~2 | 1 → `rig_found` | report |
 | report (`file_report`) | `recipient` "facility"·"security"·"none" | `rig_found` 이고 "security" → **traced** / 그 외 → **patched** | 엔딩 |
 
+## 다시 시도할 수 있는 사건 (SoT §3.8)
+
+| 사건 | 기회 | 못 찾음(miss) |
+| --- | --- | --- |
+| unit (`unit`) | 2번 | "CRAC-3"이 아닌 장치 |
+| override (`days`) | 2번 | 7일 미만 |
+| power (`rack`) | 2번 | "R-17"이 아닌 랙 |
+
 ## 선택에 따라 달라지는 주석
 
 | 사건 | 조건 플래그 | 내용 |

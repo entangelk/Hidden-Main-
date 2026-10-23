@@ -77,6 +77,20 @@ describe('validateScenario', () => {
       s.stages[0].template = s.stages[0].template.replace('        return monitor.contain(isolate)', '        level = 1\n\n        return monitor.contain(isolate)')
     }, 'contain: run hint missing under the value line'],
     ['run hint indented differently', (s) => (s.stages[1].template = s.stages[1].template.replace(/\n( *)(# Ctrl\+Enter)/, '\n$1  $2')), 'report: run hint missing under the value line'],
+    ['attempts without a miss', (s) => (s.scenes[1].attempts = 2), 'contain: attempts without a miss transition'],
+    ['miss without attempts', (s) => (s.scenes[1].transitions[1].miss = true), 'contain: miss transition without attempts'],
+    ['attempts below 2', (s) => {
+      s.scenes[1].attempts = 1
+      s.scenes[1].transitions[1].miss = true
+    }, 'contain: attempts must be an integer of 2 or more'],
+    ['attempts not explained', (s) => {
+      s.scenes[1].attempts = 2
+      s.scenes[1].transitions[1].miss = true
+    }, 'contain: comments do not say 기회는 2번'],
+    ['every transition a miss', (s) => {
+      s.scenes[1].attempts = 2
+      s.scenes[1].transitions.forEach((t) => (t.miss = true))
+    }, 'contain: every transition is a miss'],
     ['run hint missing', (s) => (s.stages[1].template = s.stages[1].template.replace(/\n *# Ctrl\+Enter\(macOS는 Cmd\+Enter\)로 실행한다\./, '')), 'report: run hint missing under the value line'],
     ['reserved next_file()', (s) => (s.stages[1].template += '\n    def next_file(self):\n        pass\n'), 'incidents/report.py: next_file() is reserved for the engine'],
     ['missing function', (s) => (s.stages[1].template = s.stages[1].template.replace('def write_report', 'def write_rep0rt')), 'incidents/report.py: scene function missing (write_report)'],
@@ -149,6 +163,15 @@ describe('validateScenario', () => {
       s.stages[1].template = s.stages[1].template.replace(/\n\n( *)return [^\n]*\n/, '\n')
     })
     expect(problems.filter((p) => p.includes('run hint'))).toEqual([])
+  })
+
+  it('accepts a retry scene whose comments give the number of runs, and explores every retry', () => {
+    const problems = problemsOf((s) => {
+      s.scenes[1].attempts = 2
+      s.scenes[1].transitions[1].miss = true
+      s.stages[0].template = s.stages[0].template.replace('        # 서버를 격리하려면', '        # 기회는 2번이다.\n        # 서버를 격리하려면')
+    })
+    expect(problems).toEqual([])
   })
 
   it('accepts the run hint in a template saved with CRLF line endings', () => {

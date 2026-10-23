@@ -41,7 +41,15 @@ function resumeAt(restored: Restored, scenario: Scenario): Restored {
 }
 // Before any scenario is chosen there is only main.py.
 const LOBBY: Restored = { progress: { choices: [] }, playerEdits: {}, workspace: { openFiles: [HUB_FILE], activeFile: HUB_FILE } }
-const NO_STATE: DerivedState = { currentSceneId: null, flags: {}, ending: null, log: [], files: {}, handoffs: {} }
+const NO_STATE: DerivedState = {
+  currentSceneId: null,
+  flags: {},
+  ending: null,
+  log: [],
+  files: {},
+  handoffs: {},
+  missesOnCurrent: 0,
+}
 
 function browserStorage(): KeyValueStore | null {
   try {
@@ -243,6 +251,8 @@ function Workspace({ storage, scenario, intro, onChoose }: WorkspaceProps) {
     const solved = result.progress.choices.at(-1)!.sceneId
     progressRef.current = result.progress
     setProgress(result.progress)
+    // A miss keeps the scene current: leave the typed value for the next try (SoT §3.8).
+    if (derive(scenario, result.progress).currentSceneId === solved) return
     updateEdits((prev) => {
       const rest = { ...prev }
       delete rest[solved]

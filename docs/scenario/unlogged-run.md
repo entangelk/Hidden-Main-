@@ -30,6 +30,14 @@
 | call (`make_call`) | `who` "director"·"dr_han"·"nobody" | "dr_han" 이고 `lumen_found` → `testimony` / "director" → `director_told` | decide |
 | decide (`decide`) | `action` 1~2 | 1 이고 `samples_alive` → **preserved** / 1 이고 스캔 안 함 → 보존 요청 반려, **erased** / 2 → **erased** | 엔딩 |
 
+## 다시 시도할 수 있는 사건 (SoT §3.8)
+
+| 사건 | 기회 | 못 찾음(miss) |
+| --- | --- | --- |
+| owner (`account`) | 2번 | "svc-lab"이 아닌 계정 |
+| chamber (`chamber`) | 2번 | 4가 아닌 챔버 |
+| project (`project`) | 2번 | "LUMEN"이 아닌 프로젝트 |
+
 ## 선택에 따라 달라지는 주석
 
 | 사건 | 조건 플래그 | 내용 |
