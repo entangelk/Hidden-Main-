@@ -133,7 +133,9 @@ export function CodeEditor({ files, edits, revision, activeFile, onEdit, onRun }
       // undo history must not reach back past the solve (architecture §6.2).
       write(model, applyEdits(base, edits).text)
       engineChanged.add(path)
-      revealRef.current.add(path)
+      // The cursor jumps only when the text itself changed (a function added), not on every solve
+      // elsewhere: main.py and left files keep the player's cursor (SoT §3.2).
+      if (previous?.slice(previous.indexOf('\n') + 1) !== base.text) revealRef.current.add(path)
     }
 
     const pathChanged = shownPathRef.current !== activeFile

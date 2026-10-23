@@ -46,6 +46,10 @@ describe('runScene', () => {
     // The file play is in still runs its scene; a file with no pointer still only names the file.
     expect(runScene(scenario, left, {}, 'incidents/report.py').progress?.choices).toHaveLength(3)
     expect(runScene(scenario, left, {}, 'config/settings.py').open).toBeUndefined()
+    // After the ending, a left file still follows its pointer; the last file has none.
+    const ended: Progress = { choices: [...left.choices, { sceneId: 'report', values: { action: 1 } }] }
+    expect(runScene(scenario, ended, {}, 'main.py').open).toBe('incidents/report.py')
+    expect(text(runScene(scenario, ended, {}, 'incidents/report.py'))).toEqual(['처리할 사건이 없습니다.'])
     // Before play leaves, main.py has no pointer and runs its scene.
     expect(runScene(scenario, start, {}, 'main.py').open).toBeUndefined()
   })
