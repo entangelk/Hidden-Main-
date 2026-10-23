@@ -31,6 +31,14 @@ const freshWorkspace = (scenario: Scenario): WorkspaceView => ({
 })
 const restoreOf = (storage: KeyValueStore | null, scenario: Scenario) =>
   restore(storage, scenario, freshWorkspace(scenario), [HUB_FILE])
+/** The save, with the current scene's file opened and active: where a chosen scenario resumes. */
+function resumeAt(restored: Restored, scenario: Scenario): Restored {
+  const scene = scenario.scenes.find((s) => s.id === derive(scenario, restored.progress).currentSceneId)
+  if (!scene) return restored
+  const file = scenario.stages.find((st) => st.id === scene.stageId)!.filePath
+  const { openFiles } = restored.workspace
+  return { ...restored, workspace: { openFiles: openFiles.includes(file) ? openFiles : [...openFiles, file], activeFile: file } }
+}
 // Before any scenario is chosen there is only main.py.
 const LOBBY: Restored = { progress: { choices: [] }, playerEdits: {}, workspace: { openFiles: [HUB_FILE], activeFile: HUB_FILE } }
 const NO_STATE: DerivedState = { currentSceneId: null, flags: {}, ending: null, log: [], files: {} }
@@ -83,7 +91,13 @@ type WorkspaceProps = {
 }
 
 function Workspace({ storage, scenario, intro, onChoose }: WorkspaceProps) {
-  const [initial] = useState(() => (scenario ? restoreOf(storage, scenario) : LOBBY))
+  // Opened from main.py (intro lines), the scenario resumes at its current scene; on a page load,
+  // the saved tabs come back as they were.
+  const [initial] = useState(() => {
+    if (!scenario) return LOBBY
+    const restored = restoreOf(storage, scenario)
+    return intro.length ? resumeAt(restored, scenario) : restored
+  })
   // Statuses of the other scenarios as saved when this workspace opened; the open one's is live.
   const [savedStatuses] = useState<HubStatus[]>(() =>
     scenarios.map((s) => (s === scenario ? 'new' : statusOf(s, restoreOf(storage, s).progress))),
@@ -201,7 +215,9 @@ function Workspace({ storage, scenario, intro, onChoose }: WorkspaceProps) {
     saveLatest()
     const before = target === scenario ? statusOf(target, progressRef.current) : savedStatuses[index]
     choose(storage, target.id, restart)
-    const how = restart ? '저장을 지우고 처음부터 시작' : before === 'new' ? '새로 시작' : '이어서 진행'
+    const how = restart
+      ? '저장을 지우고 처음부터 시작'
+      : { new: '새로 시작', playing: '이어서 진행', done: '이미 완료 (처음부터 하려면 restart = True)' }[before]
     onChoose(target.id, [info(`$ python ${HUB_FILE}`), info(`[workspace] ${target.title} — ${how}`)])
   }, [hub, say, saveLatest, scenario, savedStatuses, storage, onChoose])
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildFileTree } from '../ui/explorer/fileTree'
-import { incident0214 } from './incident-0214'
+import { scenarios } from '.'
 import { miniScenario } from './mini'
 
 // DB-04: scenarios are plain data. A function anywhere would break JSON export and replay purity.
@@ -14,7 +14,7 @@ function findFunctions(value: unknown, path = 'scenario'): string[] {
 
 describe('scenario data', () => {
   it('holds no functions and survives a JSON round trip unchanged', () => {
-    for (const scenario of [miniScenario, incident0214]) {
+    for (const scenario of [miniScenario, ...scenarios]) {
       expect(findFunctions(scenario)).toEqual([])
       expect(JSON.parse(JSON.stringify(scenario))).toEqual(scenario)
     }
@@ -25,12 +25,14 @@ describe('scenario data', () => {
   })
 })
 
-describe('Incident 02:14 file names', () => {
-  it('list the stage files in play order in the Explorer (numbered names, plain name sort)', () => {
-    const inPlayOrder = incident0214.stages.map((st) => st.filePath)
+describe('stage file names', () => {
+  it.each(scenarios.map((s) => [s.title, s] as const))('%s lists its stage files in play order in the Explorer (numbered names, plain name sort)', (_, scenario) => {
+    const inPlayOrder = scenario.stages.map((st) => st.filePath)
+    const folder = inPlayOrder[0].split('/')[0]
+    expect(inPlayOrder.every((p) => p.startsWith(`${folder}/`))).toBe(true)
     const tree = buildFileTree([...inPlayOrder].reverse())
-    const incidents = tree.find((n) => n.name === 'incidents')
-    expect(incidents?.kind === 'folder' && incidents.children.map((n) => n.path)).toEqual(inPlayOrder)
-    inPlayOrder.forEach((path, i) => expect(path).toMatch(new RegExp(`^incidents/${String(i + 1).padStart(2, '0')}_`)))
+    const node = tree.find((n) => n.name === folder)
+    expect(node?.kind === 'folder' && node.children.map((n) => n.path)).toEqual(inPlayOrder)
+    inPlayOrder.forEach((path, i) => expect(path).toMatch(new RegExp(`^${folder}/${String(i + 1).padStart(2, '0')}_`)))
   })
 })

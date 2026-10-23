@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import type { Scenario } from '../engine/types'
 import { incident0214 } from './incident-0214'
 import { miniScenario } from './mini'
+import { thermalDrift } from './thermal-drift'
+import { unloggedRun } from './unlogged-run'
 import { validateScenario } from './validate'
 
 describe('validateScenario', () => {
@@ -19,6 +21,16 @@ describe('validateScenario', () => {
     // Exhaustive play grows with every flag; keep an eye on it (8,650 states at version 3).
     expect(exploration.states).toBeLessThan(20_000)
   }, 60_000) // exhaustive play over every distinct (scene, flags) state takes a few seconds
+
+  it.each([
+    [thermalDrift.title, thermalDrift, ['patched', 'traced']],
+    [unloggedRun.title, unloggedRun, ['erased', 'preserved']],
+  ] as const)('passes %s: every scene and both endings reachable, all screens clean', (_, scenario, endings) => {
+    const { problems, exploration } = validateScenario(scenario)
+    expect(problems).toEqual([])
+    expect([...exploration.endings].sort()).toEqual(endings)
+    expect(exploration.reachedScenes.size).toBe(scenario.scenes.length)
+  })
 
   it('reports broken data and templates (the checks bite)', () => {
     const broken = structuredClone(miniScenario)
