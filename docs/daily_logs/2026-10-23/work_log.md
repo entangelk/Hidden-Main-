@@ -180,6 +180,8 @@
 
 - 독립 검증(합격): [`../../verifications/2026-10-23/next_file_cursor.md`](../../verifications/2026-10-23/next_file_cursor.md). 비차단 N1(안내 주석 위치를 잠그는 테스트 없음) → `reveal.test.ts`에 "return 바로 아래 줄" 확인 추가. N2(새로고침 뒤 떠난 파일을 처음 열면 커서가 1행) → 처음 보여줄 때 안내 함수가 있고 현재 값이 없으면 커서를 `return` 줄로. 브라우저에서 새로고침 뒤 01 파일 커서가 `return "cooling/02_unit_control.py"`에 있음 확인.
 
+- 재검증(합격, 지적 없음): [`../../verifications/2026-10-23/next_file_cursor_reverify.md`](../../verifications/2026-10-23/next_file_cursor_reverify.md).
+
 ## 결정
 
 - Owner 합의(v0.7): 사건 파일 순번, 다음 파일 안내 함수. 안내 문구는 작업자 위임.
