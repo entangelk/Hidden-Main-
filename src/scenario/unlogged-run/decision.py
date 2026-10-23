@@ -16,6 +16,7 @@ class Decision:
         #   "nobody"   - 아무에게도 연락하지 않는다
 
         who = "nobody"
+        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
         return phone.call(who)
 
@@ -37,5 +38,6 @@ class Decision:
         #   2. 기록대로 시료를 폐기하고 run-0을 지운다.
 
         action = 1
+        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
         return lab.close_case("LAB-0120", action)

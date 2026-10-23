@@ -75,7 +75,7 @@ export function handoffBlock(indent: string, nextFile: string): string {
     `${indent}def ${HANDOFF_FUNCTION}(self):`,
     `${indent}    # 이 파일의 사건은 여기까지다.`,
     `${indent}    # 다음 사건 파일이 생성됐다: ${nextFile}`,
-    `${indent}    # 왼쪽 Explorer에서 그 파일을 열어 이어서 진행한다.`,
+    `${indent}    # 여기서 Ctrl+Enter(macOS는 Cmd+Enter)로 실행하면 그 파일이 열린다. 왼쪽 Explorer에서 열어도 된다.`,
     '',
     `${indent}    return "${nextFile}"`,
   ].join('\n')

@@ -16,6 +16,7 @@ class IncidentResponder:
         severity = 0.73
 
         action = 1
+        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
         if severity >= 0.65:
             return monitor.dispatch(alert_id, action)
@@ -32,6 +33,7 @@ class IncidentResponder:
         # 서버를 격리하려면 isolate를 True로 바꾼다.
 
         isolate = False
+        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
         return monitor.contain(isolate)
 

@@ -2,6 +2,7 @@
 
 | 날짜 | 변경 | 상세 |
 | --- | --- | --- |
+| 2026-10-23 | 키보드만으로 진행: 커서가 현재 값에, 값 줄 아래 실행 안내, `next_file()`에서 Ctrl+Enter로 다음 파일 (SoT v0.9) | [작업 로그](docs/daily_logs/2026-10-23/work_log.md) |
 | 2026-10-23 | `main.py` 시나리오 선택·처음부터 다시 하기, 새 시나리오 *Thermal Drift*·*Unlogged Run* (SoT v0.8) | [작업 로그](docs/daily_logs/2026-10-23/work_log.md) |
 | 2026-10-23 | 첫 플레이 피드백: 사건 파일 이름에 순번, 다음 파일 안내 함수 `next_file()` (SoT v0.7), README | [작업 로그](docs/daily_logs/2026-10-23/work_log.md) |
 | 2026-10-22 | P04 시나리오 *Incident 02:14* 완료 (사건 13개, 엔딩 2개) | [작업 로그](docs/daily_logs/2026-10-22/work_log.md) |
@@ -9,6 +10,12 @@
 | 2026-10-22 | P02 핵심 루프 프로토타입 완료 (값 편집 → 실행 → 결과 로그 → 새 파일 생성) | [작업 로그](docs/daily_logs/2026-10-22/work_log.md) |
 | 2026-10-22 | P01 IDE 셸 완료 (Monaco 편집기, Explorer, 탭, Terminal, Status Bar) | [작업 로그](docs/daily_logs/2026-10-22/work_log.md) |
 | 2026-10-22 | 초기 SoT v0.1, 아키텍처 초안, 페이즈 P01~P05, 결정 브리프 DB-01~04 작성 → DB-01~04 해결(SoT v0.2), P01 프로젝트 골격 | [작업 로그](docs/daily_logs/2026-10-22/work_log.md) |
+
+## 2026-10-23 — 키보드만으로 진행
+
+- 파일을 열거나 다음 사건 함수가 추가되면 커서가 그 값 끝에 놓인다
+- 모든 값 줄 아래에 `# Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.`
+- `next_file()`이 붙은 파일에서 Ctrl+Enter를 누르면 다음 파일이 열린다
 
 ## 2026-10-23 — 시나리오 선택
 

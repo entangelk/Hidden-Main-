@@ -72,6 +72,7 @@ describe('validateScenario', () => {
     ['flag never read', (s) => s.scenes[1].transitions[1].effects.push({ flag: 'unused', value: 1 }), 'flag "unused" is set but never read'],
     // Listing report.py first makes contain → report a move back to an earlier file, with no scene cycle.
     ['back to an earlier file', (s) => s.stages.reverse(), 'contain: goes back to an earlier stage file (report)'],
+    ['run hint missing', (s) => (s.stages[1].template = s.stages[1].template.replace(/\n *# Ctrl\+Enter\(macOS는 Cmd\+Enter\)로 실행한다\./, '')), 'report: run hint missing under the value line'],
     ['reserved next_file()', (s) => (s.stages[1].template += '\n    def next_file(self):\n        pass\n'), 'incidents/report.py: next_file() is reserved for the engine'],
     ['missing function', (s) => (s.stages[1].template = s.stages[1].template.replace('def write_report', 'def write_rep0rt')), 'incidents/report.py: scene function missing (write_report)'],
     ['field without a literal slot', (s) => (s.stages[1].template = s.stages[1].template.replace('        action = 1\n', '        action = int("1")\n')), 'report: a field has no literal slot (default must be a plain literal)'],

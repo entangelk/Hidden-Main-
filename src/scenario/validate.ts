@@ -137,6 +137,9 @@ export function explore(scenario: Scenario, problems: string[]): Exploration {
   return { endings, reachedScenes, firedTransitions, variantOutcomes, states: seen.size }
 }
 
+/** The comment every scene shows right under its last value line (SoT §3.2). */
+export const RUN_HINT = '# Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.'
+
 /** Static checks of data and templates. */
 export function staticProblems(scenario: Scenario): string[] {
   const problems: string[] = []
@@ -169,6 +172,9 @@ export function staticProblems(scenario: Scenario): string[] {
       const lines = body.match(new RegExp(`^ *${f.name} *=`, 'gm')) ?? []
       if (lines.length !== 1) problems.push(`${scene.id}.${f.name}: ${lines.length} assignment lines (need exactly 1)`)
     }
+    const lastField = Math.max(...scene.editableFields.map((f) => body.search(new RegExp(`^ *${f.name} *=`, 'm'))))
+    const afterField = body.slice(lastField).split('\n')[1]?.trim()
+    if (lastField >= 0 && afterField !== RUN_HINT) problems.push(`${scene.id}: run hint missing under the value line`)
     const slots = findValueSlots(stage.template, scene.id, scene.functionName, scene.editableFields)
     if (slots.length !== scene.editableFields.length) problems.push(`${scene.id}: a field has no literal slot (default must be a plain literal)`)
     const defaults = Object.fromEntries(slots.map((s) => [s.field, s.defaultLiteral]))

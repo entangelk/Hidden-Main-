@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Scenario } from '../../engine/types'
 import { miniScenario } from '../../scenario/mini'
 import { scenarios } from '../../scenario'
+import { RUN_HINT } from '../../scenario/validate'
 import { HUB_FILE, HUB_SCENE, hubView, runHub, statusOf } from './hub'
 
 const two: Scenario[] = [miniScenario, { ...miniScenario, id: 'mini-2', title: 'Mini 2', summary: '두 번째.' }]
@@ -30,8 +31,10 @@ describe('hubView', () => {
     expect(shown(null)).toEqual(['1', 'False'])
   })
 
-  it('exposes exactly the two hub slots', () => {
+  it('exposes exactly the two hub slots, with the run hint right under the last one', () => {
     const view = hubView(two, ['new', 'new'], null)
+    const afterRestart = view.text.slice(view.valueSlots[1].end).split('\n')[1]
+    expect(afterRestart.trim()).toBe(RUN_HINT)
     expect(view.valueSlots.map((s) => [s.sceneId, s.field])).toEqual([
       [HUB_SCENE, 'scenario'],
       [HUB_SCENE, 'restart'],

@@ -17,6 +17,7 @@ class UnitControl:
         # False면 그대로 두고 기록부터 본다.
 
         resume = False
+        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
         return crac.set_mode("CRAC-3", resume)
 
@@ -32,6 +33,7 @@ class UnitControl:
         account = "svc-facility"
 
         days = 1
+        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
         return audit.mode_changes(account, days)
 
@@ -48,5 +50,6 @@ class UnitControl:
         #   "R-17" - 예비 랙 (자산 대장에는 비어 있다)
 
         rack = "R-15"
+        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
         return power.rack_usage(rack)

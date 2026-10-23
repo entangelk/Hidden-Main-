@@ -9,6 +9,8 @@ export type RunResult = {
   lines: LogLine[]
   /** Set only when the run solved the scene. */
   progress?: Progress
+  /** Set when the run was in a left file: the file its next_file() points to, to open. */
+  open?: string
 }
 
 const lineOf = (text: string, offset: number) => text.slice(0, offset).split('\n').length
@@ -49,6 +51,9 @@ export function runScene(
   activeFile: string | null,
 ): RunResult {
   const state = derive(scenario, progress)
+  // In a file play has left, Ctrl/Cmd+Enter follows its next_file() pointer (SoT §3.5).
+  const pointed = activeFile === null ? undefined : state.handoffs[activeFile]
+  if (pointed) return { lines: [notice(`[workspace] ${activeFile}: next_file() → ${pointed}`)], open: pointed }
   const scene = scenario.scenes.find((s) => s.id === state.currentSceneId)
   if (!scene) return { lines: [notice('처리할 사건이 없습니다.')] }
   const file = scenario.stages.find((st) => st.id === scene.stageId)!.filePath

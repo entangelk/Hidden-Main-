@@ -123,4 +123,6 @@ export type DerivedState = {
   log: LogLine[]
   /** Every visible file (initial + unlocked stages) as the engine renders it, before player edits. */
   files: Record<string, FileView>
+  /** File play has left → the file its next_file() points to (architecture §5.2). */
+  handoffs: Record<string, string>
 }

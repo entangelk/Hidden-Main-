@@ -35,7 +35,7 @@ export function CodeEditor({ files, edits, revision, activeFile, onEdit, onRun }
   // Set while this component itself changes a model, so its change handler ignores the event.
   const writingRef = useRef(false)
   // Files whose engine text changed (or that were never shown) since they were last on screen:
-  // the next time they are shown, the current scene's value is scrolled into view.
+  // the next time they are shown, the cursor goes to the current scene's first value.
   const revealRef = useRef(new Set<string>())
   // Files that just gained the pointer to the next file; it is scrolled into view (architecture §5.2).
   const revealHandoffRef = useRef(new Set<string>())
@@ -201,10 +201,13 @@ export function CodeEditor({ files, edits, revision, activeFile, onEdit, onRun }
       slotsRef.current = applyEdits(base, edits).valueSlots
       paint(model)
     }
-    // A newly added scene function lands at the bottom of the file; scroll it into view (no cursor
-    // move, no animation) so the player sees what changed.
+    // A newly added scene function lands at the bottom of the file. Put the cursor at the end of
+    // its first value and scroll it into view (no animation), so the player can type the value and
+    // press Ctrl/Cmd+Enter without reaching for the mouse (SoT §3.2).
     if (revealRef.current.delete(activeFile) && slotsRef.current.length) {
-      editor.revealLineInCenterIfOutsideViewport(model.getPositionAt(slotsRef.current[0].start).lineNumber)
+      const end = model.getPositionAt(slotsRef.current[0].end)
+      editor.setPosition(end)
+      editor.revealLineInCenterIfOutsideViewport(end.lineNumber)
     } else if (revealHandoffRef.current.delete(activeFile)) {
       editor.revealLineInCenterIfOutsideViewport(model.getPositionAt(model.getValue().indexOf(HANDOFF_DEF)).lineNumber)
     }

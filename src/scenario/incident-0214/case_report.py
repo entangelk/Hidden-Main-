@@ -25,6 +25,7 @@ class CaseReport:
         case_id = "INC-0214"
 
         action = 1
+        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
         return reporting.draft(case_id, action)
 
@@ -40,5 +41,6 @@ class CaseReport:
         priority = "normal"
 
         recipient = "archive"
+        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
         return reporting.submit(recipient, priority)

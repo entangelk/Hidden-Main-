@@ -1,6 +1,6 @@
 # 데이터 계약
 
-> 상태: **v0.6** · 2026-10-23 · 상위 기준: [`../SOT.md`](../SOT.md), [`00_overview.md`](00_overview.md)
+> 상태: **v0.7** · 2026-10-23 · 상위 기준: [`../SOT.md`](../SOT.md), [`00_overview.md`](00_overview.md)
 > 작성 규칙: [`../guides/data-contracts.md`](../guides/data-contracts.md), [`../guides/api-and-persistence-schemas.md`](../guides/api-and-persistence-schemas.md)
 > 정본 코드: 엔진 계약은 `src/engine/types.ts`, `SaveSnapshot`·`WorkspaceView`·`KeyValueStore`는 `src/persistence/save.ts`. 이 문서와 코드가 다르면 이 문서를 고친다.
 
@@ -175,6 +175,7 @@ type DerivedState = {
   ending: EndingId | null;
   log: LogLine[];                   // 전체 Terminal 기록 (재생으로 복원)
   files: Record<string, FileView>;  // 보이는 파일 전부(initialFiles + 해금된 스테이지) → 템플릿 + 스토리 오버레이 (플레이어 편집 적용 전)
+  handoffs: Record<string, string>; // 진행이 떠난 파일 → 그 파일의 next_file()이 가리키는 파일 (재생 중 기록, 아키텍처 §5.2)
 };
 
 type FileView = {
