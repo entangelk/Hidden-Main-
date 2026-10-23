@@ -1,0 +1,188 @@
+.workbench {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  grid-template-rows: 1fr 22px;
+  height: 100%;
+}
+
+.panel-title {
+  padding: 8px 12px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: #bbbbbb;
+}
+
+/* Explorer */
+.explorer {
+  background: #252526;
+  overflow-y: auto;
+  user-select: none;
+}
+
+.explorer ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.explorer-row {
+  display: flex;
+  align-items: center;
+  height: 22px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.explorer-row:hover {
+  background: #2a2d2e;
+}
+
+.tab-label:focus-visible,
+.tab-close:focus-visible {
+  outline: 1px solid #007fd4;
+  outline-offset: -1px;
+}
+
+.explorer-item:focus-visible {
+  outline: none;
+}
+
+.explorer-item:focus-visible > .explorer-row {
+  outline: 1px solid #007fd4;
+  outline-offset: -1px;
+}
+
+.explorer-row.is-active {
+  background: #37373d;
+}
+
+.explorer-chevron {
+  display: inline-block;
+  width: 16px;
+  font-size: 10px;
+}
+
+/* Editor group */
+.editor-group {
+  display: grid;
+  grid-template-rows: 35px 1fr 180px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.tabs {
+  display: flex;
+  background: #252526;
+  overflow-x: auto;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 6px 0 0;
+  background: #2d2d2d;
+  border-right: 1px solid #1e1e1e;
+  color: #969696;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tab-label {
+  align-self: stretch;
+  border: 0;
+  padding: 0 0 0 10px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.tab.is-active {
+  background: #1e1e1e;
+  color: #ffffff;
+}
+
+.tab-close {
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  visibility: hidden;
+}
+
+.tab:hover .tab-close,
+.tab:focus-within .tab-close,
+.tab.is-active .tab-close,
+.tab.is-dirty .tab-close {
+  visibility: visible;
+}
+
+/* Dirty tabs show a dot in the close slot; hovering swaps it back to the close mark. */
+.tab-dirty-dot,
+.tab.is-dirty .tab-close-x {
+  display: none;
+}
+
+.tab.is-dirty .tab-dirty-dot,
+.tab.is-dirty .tab-close:hover .tab-close-x {
+  display: inline;
+}
+
+.tab.is-dirty .tab-close:hover .tab-dirty-dot {
+  display: none;
+}
+
+.code-editor {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Terminal */
+.terminal {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid #3c3c3c;
+  min-height: 0;
+}
+
+.terminal-body {
+  flex: 1;
+  margin: 0;
+  padding: 0 12px 8px;
+  overflow: auto;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 13px;
+}
+
+/* Status bar */
+.statusbar {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 10px;
+  background: #007acc;
+  color: #ffffff;
+  font-size: 12px;
+}
+
+.statusbar-right {
+  display: flex;
+  gap: 16px;
+}
+
+/* Editable value of the current scene (DB-02): a quiet dotted underline, no game-like marker. */
+.value-slot {
+  text-decoration: underline dotted #4fc1ff;
+  text-underline-offset: 3px;
+}
+
+.terminal-line.is-warn {
+  color: #cca700;
+}
+
+.terminal-line.is-error {
+  color: #f48771;
+}
