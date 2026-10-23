@@ -15,6 +15,7 @@ class RackAudit:
         #   2. 랙은 건드리지 않고 온도만 지켜본다.
 
         action = 1
+        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
         return racks.inspect("R-17", action)
 
@@ -39,5 +40,6 @@ class RackAudit:
         #   "none"     - 보고하지 않는다
 
         recipient = "facility"
+        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
         return report.send("INC-0340", recipient)

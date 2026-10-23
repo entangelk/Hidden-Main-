@@ -174,6 +174,11 @@ describe('derive — pointer to the next file (architecture §5.2)', () => {
     expect(ended.files['main.py'].text.match(/def next_file/g)).toHaveLength(1)
   })
 
+  it('lists the pointer in handoffs (from the left file to the new one), and nothing before', () => {
+    expect(derive(scenario, left).handoffs).toEqual({ 'main.py': 'incidents/report.py' })
+    expect(derive(scenario, at(c('triage', { action: 1 }))).handoffs).toEqual({})
+  })
+
   it('leaves the new file\'s slots where they are', () => {
     const view = derive(scenario, left).files['incidents/report.py']
     expect(view.valueSlots.map((s) => view.text.slice(s.start, s.end))).toEqual(['1'])

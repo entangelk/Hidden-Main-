@@ -20,6 +20,7 @@ def select_scenario():
 
     scenario = 1
     restart = False
+    # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
     return workspace.load(scenario, restart)
 

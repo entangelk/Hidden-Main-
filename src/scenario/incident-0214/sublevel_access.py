@@ -17,6 +17,7 @@ class SublevelAccess:
         floor = "B2"
 
         action = 1
+        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
         return facility.request_access(floor, action)
 
@@ -39,6 +40,7 @@ class SublevelAccess:
         #   "B2-11" - 공조기계실
 
         room = "B2-03"
+        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
         return facility.enter(room)
 
@@ -66,5 +68,6 @@ class SublevelAccess:
         # @end
 
         action = 1
+        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
         return facility.handle(action)

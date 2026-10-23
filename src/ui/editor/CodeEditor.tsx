@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { applyEdits, shiftSlots } from '../../engine/slots'
 import type { FileView, PlayerEdits, SceneId, ValueSlot } from '../../engine/types'
 import { acceptChange } from './acceptChange'
-import { gainedHandoff, HANDOFF_DEF } from './handoffReveal'
+import { baseKey, gainedHandoff, HANDOFF_DEF, textChanged } from './reveal'
 import { monaco } from './monaco'
 
 type Props = {
@@ -35,7 +35,7 @@ export function CodeEditor({ files, edits, revision, activeFile, onEdit, onRun }
   // Set while this component itself changes a model, so its change handler ignores the event.
   const writingRef = useRef(false)
   // Files whose engine text changed (or that were never shown) since they were last on screen:
-  // the next time they are shown, the current scene's value is scrolled into view.
+  // the next time they are shown, the cursor goes to the current scene's first value.
   const revealRef = useRef(new Set<string>())
   // Files that just gained the pointer to the next file; it is scrolled into view (architecture §5.2).
   const revealHandoffRef = useRef(new Set<string>())
@@ -124,7 +124,7 @@ export function CodeEditor({ files, edits, revision, activeFile, onEdit, onRun }
     const engineChanged = new Set<string>()
     for (const [path, model] of modelsRef.current) {
       const base = files[path]
-      const key = `${revision}\n${base?.text}`
+      const key = baseKey(revision, base?.text)
       const previous = baseRef.current.get(path)
       if (!base || previous === key) continue
       baseRef.current.set(path, key)
@@ -133,7 +133,9 @@ export function CodeEditor({ files, edits, revision, activeFile, onEdit, onRun }
       // undo history must not reach back past the solve (architecture §6.2).
       write(model, applyEdits(base, edits).text)
       engineChanged.add(path)
-      revealRef.current.add(path)
+      // The cursor jumps only when the text itself changed (a function added), not on every solve
+      // elsewhere: main.py and left files keep the player's cursor (SoT §3.2).
+      if (textChanged(previous, base.text)) revealRef.current.add(path)
     }
 
     const pathChanged = shownPathRef.current !== activeFile
@@ -151,7 +153,7 @@ export function CodeEditor({ files, edits, revision, activeFile, onEdit, onRun }
     let model = modelsRef.current.get(activeFile)
     if (!model) {
       const created = monaco.editor.createModel(applyEdits(base, edits).text, 'python', monaco.Uri.file(activeFile))
-      baseRef.current.set(activeFile, `${revision}\n${base.text}`)
+      baseRef.current.set(activeFile, baseKey(revision, base.text))
       created.onDidChangeContent((e) => {
         if (writingRef.current) return
         const change = e.changes.length === 1 ? e.changes[0] : null
@@ -201,10 +203,13 @@ export function CodeEditor({ files, edits, revision, activeFile, onEdit, onRun }
       slotsRef.current = applyEdits(base, edits).valueSlots
       paint(model)
     }
-    // A newly added scene function lands at the bottom of the file; scroll it into view (no cursor
-    // move, no animation) so the player sees what changed.
+    // A newly added scene function lands at the bottom of the file. Put the cursor at the end of
+    // its first value and scroll it into view (no animation), so the player can type the value and
+    // press Ctrl/Cmd+Enter without reaching for the mouse (SoT §3.2).
     if (revealRef.current.delete(activeFile) && slotsRef.current.length) {
-      editor.revealLineInCenterIfOutsideViewport(model.getPositionAt(slotsRef.current[0].start).lineNumber)
+      const end = model.getPositionAt(slotsRef.current[0].end)
+      editor.setPosition(end)
+      editor.revealLineInCenterIfOutsideViewport(end.lineNumber)
     } else if (revealHandoffRef.current.delete(activeFile)) {
       editor.revealLineInCenterIfOutsideViewport(model.getPositionAt(model.getValue().indexOf(HANDOFF_DEF)).lineNumber)
     }

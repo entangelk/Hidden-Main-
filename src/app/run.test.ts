@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { derive } from '../engine/derive'
+import type { Progress } from '../engine/types'
 import { miniScenario as scenario } from '../scenario/mini'
 import { runScene } from './run'
 
@@ -34,6 +35,23 @@ describe('runScene', () => {
       lines: [{ level: 'info', text: '실행할 파일: main.py (현재 탭: config/settings.py)' }],
     })
     expect(text(runScene(scenario, start, {}, null))).toEqual(['실행할 파일: main.py'])
+  })
+
+  it('follows next_file() from a file play has left, and only from there (SoT §3.5)', () => {
+    const left: Progress = { choices: [{ sceneId: 'triage', values: { action: 1 } }, { sceneId: 'contain', values: { isolate: true } }] }
+    expect(runScene(scenario, left, {}, 'main.py')).toEqual({
+      lines: [{ level: 'info', text: '[workspace] main.py: next_file() → incidents/report.py' }],
+      open: 'incidents/report.py',
+    })
+    // The file play is in still runs its scene; a file with no pointer still only names the file.
+    expect(runScene(scenario, left, {}, 'incidents/report.py').progress?.choices).toHaveLength(3)
+    expect(runScene(scenario, left, {}, 'config/settings.py').open).toBeUndefined()
+    // After the ending, a left file still follows its pointer; the last file has none.
+    const ended: Progress = { choices: [...left.choices, { sceneId: 'report', values: { action: 1 } }] }
+    expect(runScene(scenario, ended, {}, 'main.py').open).toBe('incidents/report.py')
+    expect(text(runScene(scenario, ended, {}, 'incidents/report.py'))).toEqual(['처리할 사건이 없습니다.'])
+    // Before play leaves, main.py has no pointer and runs its scene.
+    expect(runScene(scenario, start, {}, 'main.py').open).toBeUndefined()
   })
 
   it('runs a later function of the same file once it is current', () => {

@@ -72,6 +72,12 @@ describe('validateScenario', () => {
     ['flag never read', (s) => s.scenes[1].transitions[1].effects.push({ flag: 'unused', value: 1 }), 'flag "unused" is set but never read'],
     // Listing report.py first makes contain → report a move back to an earlier file, with no scene cycle.
     ['back to an earlier file', (s) => s.stages.reverse(), 'contain: goes back to an earlier stage file (report)'],
+    ['run hint under the first of two fields only', (s) => {
+      s.scenes[1].editableFields.push({ name: 'level', type: 'int', options: [1] })
+      s.stages[0].template = s.stages[0].template.replace('        return monitor.contain(isolate)', '        level = 1\n\n        return monitor.contain(isolate)')
+    }, 'contain: run hint missing under the value line'],
+    ['run hint indented differently', (s) => (s.stages[1].template = s.stages[1].template.replace(/\n( *)(# Ctrl\+Enter)/, '\n$1  $2')), 'report: run hint missing under the value line'],
+    ['run hint missing', (s) => (s.stages[1].template = s.stages[1].template.replace(/\n *# Ctrl\+Enter\(macOS는 Cmd\+Enter\)로 실행한다\./, '')), 'report: run hint missing under the value line'],
     ['reserved next_file()', (s) => (s.stages[1].template += '\n    def next_file(self):\n        pass\n'), 'incidents/report.py: next_file() is reserved for the engine'],
     ['missing function', (s) => (s.stages[1].template = s.stages[1].template.replace('def write_report', 'def write_rep0rt')), 'incidents/report.py: scene function missing (write_report)'],
     ['field without a literal slot', (s) => (s.stages[1].template = s.stages[1].template.replace('        action = 1\n', '        action = int("1")\n')), 'report: a field has no literal slot (default must be a plain literal)'],
@@ -131,6 +137,23 @@ describe('validateScenario', () => {
         .replace('        # @else\n        # 서버는 아직', '        # @else\n        #   2. 보이지 않는 줄\n        # 서버는 아직')
     })
     expect(problems).toContain('report.action: comment options [1] ≠ field options [1,2]')
+  })
+
+  it('accepts the run hint under the last of two fields, and right after the last code line', () => {
+    const problems = problemsOf((s) => {
+      s.scenes[1].editableFields.push({ name: 'level', type: 'int', options: [1] })
+      s.stages[0].template = s.stages[0].template.replace(
+        '        isolate = False\n',
+        '        isolate = False\n        level = 1\n',
+      )
+      s.stages[1].template = s.stages[1].template.replace(/\n\n( *)return [^\n]*\n/, '\n')
+    })
+    expect(problems.filter((p) => p.includes('run hint'))).toEqual([])
+  })
+
+  it('accepts the run hint in a template saved with CRLF line endings', () => {
+    const problems = problemsOf((s) => s.stages.forEach((st) => (st.template = st.template.replace(/\n/g, '\r\n'))))
+    expect(problems.filter((p) => p.includes('run hint'))).toEqual([])
   })
 
   it('flags a directive left outside a function and a nested def', () => {

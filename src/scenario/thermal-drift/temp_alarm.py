@@ -15,6 +15,7 @@ class ThermalMonitor:
         room_temp = 31.2
 
         action = 1
+        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
         return thermal.respond(action)
 
@@ -31,5 +32,6 @@ class ThermalMonitor:
         #   "CRAC-3"
 
         unit = "CRAC-1"
+        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
         return crac.status(unit)

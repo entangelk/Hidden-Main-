@@ -19,6 +19,7 @@ class SecurityAudit:
         window = "02:10-02:20"
 
         target = "admin"
+        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
         return auth.audit(target, window)
 
@@ -39,6 +40,7 @@ class SecurityAudit:
         # @end
 
         action = 1
+        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
         return auth.apply_policy(action)
 
@@ -50,5 +52,6 @@ class SecurityAudit:
         retention_days = 1
 
         keep_logs = False
+        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
         return logs.snapshot(keep_logs)

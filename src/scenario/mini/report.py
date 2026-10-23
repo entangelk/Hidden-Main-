@@ -15,5 +15,6 @@ class CaseReport:
         #   2. 상위 부서로 넘긴다.
 
         action = 1
+        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
         return reporting.submit(action)

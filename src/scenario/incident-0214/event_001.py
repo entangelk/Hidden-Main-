@@ -16,6 +16,7 @@ class IncidentMonitor:
         severity = 0.73
 
         action = 1
+        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
         if severity >= 0.65:
             return alerts.dispatch(alert_id, action)
@@ -33,6 +34,7 @@ class IncidentMonitor:
         # hour 값을 0~23 사이의 정수(시)로 바꾸고 실행하면 그 시간대의 작업을 조회한다.
 
         hour = 0
+        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
         return scheduler.list_jobs(hour)
 
@@ -45,5 +47,6 @@ class IncidentMonitor:
         # 알리려면 notify_security를 True로 바꾼다. False면 혼자 조사를 계속한다.
 
         notify_security = False
+        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
         return notify.security(notify_security)

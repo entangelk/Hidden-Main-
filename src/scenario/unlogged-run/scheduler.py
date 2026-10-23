@@ -15,6 +15,7 @@ class Scheduler:
         job = "run-0"
 
         action = 1
+        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
         return scheduler.handle(job, action)
 
@@ -32,5 +33,6 @@ class Scheduler:
         #   "admin"   - 시스템 관리자
 
         account = "kim.jh"
+        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
         return audit.jobs_by(account)

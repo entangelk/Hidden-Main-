@@ -19,6 +19,7 @@ class PowerControl:
         circuit = "B2-EAST"
 
         action = 1
+        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
         return power.inspect(circuit, action)
 
@@ -29,5 +30,6 @@ class PowerControl:
         sample_rate = 60
 
         limit = 50
+        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
         return power.set_alert_threshold(limit)

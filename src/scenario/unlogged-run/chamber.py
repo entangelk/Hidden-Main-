@@ -13,6 +13,7 @@ class ChamberMonitor:
         # 배양 챔버는 4대다. 들여다볼 챔버 번호를 chamber 값에 넣는다. 1~4 사이의 정수.
 
         chamber = 1
+        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
         return chambers.read(chamber)
 
@@ -26,6 +27,7 @@ class ChamberMonitor:
         # 스캔을 돌리려면 scan을 True로 바꾼다. 스캔 중에는 챔버 문이 잠긴다.
 
         scan = False
+        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
         return microscope.scan(scan)
 
@@ -46,5 +48,6 @@ class ChamberMonitor:
         #   "LUMEN" - 재생 세포 연구
 
         project = "ARGO"
+        # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
 
         return registry.lookup(project)

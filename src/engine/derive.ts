@@ -85,7 +85,7 @@ function replay(scenario: Scenario, choices: Choice[]): Replay {
       handoffs.get(stage.filePath) ?? null,
     )
   }
-  return { currentSceneId, flags, ending, log, files, validCount }
+  return { currentSceneId, flags, ending, log, files, handoffs: Object.fromEntries(handoffs), validCount }
 }
 
 /** Everything the screen shows, rebuilt from the progress record (data contract §6). Pure. */

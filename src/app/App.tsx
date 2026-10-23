@@ -41,7 +41,7 @@ function resumeAt(restored: Restored, scenario: Scenario): Restored {
 }
 // Before any scenario is chosen there is only main.py.
 const LOBBY: Restored = { progress: { choices: [] }, playerEdits: {}, workspace: { openFiles: [HUB_FILE], activeFile: HUB_FILE } }
-const NO_STATE: DerivedState = { currentSceneId: null, flags: {}, ending: null, log: [], files: {} }
+const NO_STATE: DerivedState = { currentSceneId: null, flags: {}, ending: null, log: [], files: {}, handoffs: {} }
 
 function browserStorage(): KeyValueStore | null {
   try {
@@ -202,6 +202,11 @@ function Workspace({ storage, scenario, intro, onChoose }: WorkspaceProps) {
     [updateEdits],
   )
 
+  const open = useCallback((path: string) => {
+    setOpenFiles((prev) => (prev.includes(path) ? prev : [...prev, path]))
+    setActiveFile(path)
+  }, [])
+
   const say = useCallback(
     (lines: LogLine[]) => {
       if (!lines.length) return
@@ -233,6 +238,7 @@ function Workspace({ storage, scenario, intro, onChoose }: WorkspaceProps) {
     const before = progressRef.current
     const result = runScene(scenario, before, editsRef.current, activeFile)
     say(result.lines)
+    if (result.open) return open(result.open)
     if (!result.progress) return
     const solved = result.progress.choices.at(-1)!.sceneId
     progressRef.current = result.progress
@@ -242,7 +248,7 @@ function Workspace({ storage, scenario, intro, onChoose }: WorkspaceProps) {
       delete rest[solved]
       return rest
     })
-  }, [activeFile, scenario, runMain, say, updateEdits])
+  }, [activeFile, scenario, runMain, say, open, updateEdits])
 
   // Ctrl/Cmd+Enter outside the editor. Inside it, Monaco's command handles the key and stops
   // the event, so it never reaches this listener.
@@ -255,11 +261,6 @@ function Workspace({ storage, scenario, intro, onChoose }: WorkspaceProps) {
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [run])
-
-  const open = (path: string) => {
-    setOpenFiles((prev) => (prev.includes(path) ? prev : [...prev, path]))
-    setActiveFile(path)
-  }
 
   const close = (path: string) => {
     const index = openFiles.indexOf(path)
