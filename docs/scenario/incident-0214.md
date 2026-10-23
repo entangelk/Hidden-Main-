@@ -1,6 +1,6 @@
 # 시나리오 — *Incident 02:14*
 
-> 상태: v4 (시나리오 `version: 4`) · 2026-10-23 · 코드: `src/scenario/incident-0214/`
+> 상태: v5 (시나리오 `version: 5`) · 2026-10-23 · 코드: `src/scenario/incident-0214/`
 > 상위 기준: [`../SOT.md`](../SOT.md) §5.4, [`../architecture/01_data_contracts.md`](../architecture/01_data_contracts.md) §3
 
 ## 줄거리
@@ -43,6 +43,19 @@
 | device (`handle_device`) | `action` 1~3 | 장치를 찾았으면: 1 → `documented` / 2 → `unplugged` / 3 → 그대로 둠. 못 찾았으면 선택지 내용이 바뀌고(빈 방 사진·옆방 확인·나옴) 효과 없음 | report |
 | report (`draft_report`) | `action` 1~2 | 1 이고 `device_found` → `truthful` / 1 이고 장치 못 찾음 → 사실만 기재 / 2 → "장애"로 정리 | submit |
 | submit (`submit_report`) | `recipient` "security"·"facility"·"archive" | `truthful` 이고 "archive"가 아님 → **resolved** / 그 외 → **sealed** | 엔딩 |
+
+## 다시 시도할 수 있는 사건 (SoT §3.8)
+
+| 사건 | 기회 | 못 찾음(miss) |
+| --- | --- | --- |
+| schedule (`hour`) | 3번 | 02시가 아닌 시간대 |
+| audit (`target`) | 2번 | "backup"이 아닌 계정 |
+| limit (`limit`) | 2번 | 30 초과 |
+| room (`room`) | 2번 | "B2-07"이 아닌 방 |
+
+마지막 기회까지 못 찾으면 표의 "그 외" 분기로 넘어간다.
+
+- v5: 이 다시 시도 규칙 때문에 버전을 올렸다. 이전 저장(배포된 v3·v4)에서 이 사건들을 못 찾고 넘어간 기록은 그 사건까지만 이어지고(남은 기회가 있어 다음 선택이 맞지 않음), "시나리오가 바뀌어 일부 진행을 되돌렸습니다" 안내가 나온다. 편집 중이던 값은 버전 규칙으로 초기화된다.
 
 ## 선택에 따라 달라지는 주석 (DB-01)
 

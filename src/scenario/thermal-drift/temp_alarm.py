@@ -30,6 +30,7 @@ class ThermalMonitor:
         #   "CRAC-1"
         #   "CRAC-2"
         #   "CRAC-3"
+        # 기회는 2번이다. 찾지 못하면 다른 값으로 다시 실행할 수 있다.
 
         unit = "CRAC-1"
         # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.

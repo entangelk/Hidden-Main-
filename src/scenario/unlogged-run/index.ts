@@ -20,7 +20,7 @@ export const unloggedRun = {
   id: 'unlogged-run',
   title: 'Unlogged Run',
   summary: '연구소 자동화 스케줄러가 기록에 없는 실험을 돌리고 있다.',
-  version: 1,
+  version: 2,
   initialFiles: [{ path: 'config/lab.py', content: labPy }],
   stages: [
     { id: 's1', filePath: 'lab/01_scheduler.py', template: schedulerPy, sceneIds: ['queue', 'owner'] },
@@ -44,10 +44,11 @@ export const unloggedRun = {
       id: 'owner',
       stageId: 's1',
       functionName: 'find_owner',
+      attempts: 2,
       editableFields: [{ name: 'account', type: 'string', options: ['svc-lab', 'kim.jh', 'admin'] }],
       transitions: [
         { when: when('account', 'svc-lab'), effects: [{ flag: 'owner_traced', value: true }], log: [info('[audit] svc-lab: run-0 등록 2년 전. 등록한 단말은 퇴사한 한서윤 박사의 것.')], next: go('chamber') },
-        { when: [], effects: [], log: [info('[audit] 이 계정은 run-0과 관계가 없다.')], next: go('chamber') },
+        { miss: true, when: [], effects: [], log: [info('[audit] 이 계정은 run-0과 관계가 없다.')], next: go('chamber') },
       ],
     },
     // ---- Stage 2: 02_chamber.py — what is growing ----
@@ -55,10 +56,11 @@ export const unloggedRun = {
       id: 'chamber',
       stageId: 's2',
       functionName: 'read_chamber',
+      attempts: 2,
       editableFields: [{ name: 'chamber', type: 'int', options: [1, 2, 3, 4] }],
       transitions: [
         { when: when('chamber', 4), effects: [{ flag: 'chamber_found', value: true }], log: [info("[chamber] 4번: 37.0도. 배양 용기 12개, 라벨 'LMN'. 실험 대장에는 없다.")], next: go('samples') },
-        { when: [], effects: [], log: [info('[chamber] 등록된 실험만 있다.')], next: go('samples') },
+        { miss: true, when: [], effects: [], log: [info('[chamber] 등록된 실험만 있다.')], next: go('samples') },
       ],
     },
     {
@@ -75,10 +77,11 @@ export const unloggedRun = {
       id: 'project',
       stageId: 's2',
       functionName: 'check_project',
+      attempts: 2,
       editableFields: [{ name: 'project', type: 'string', options: ['ARGO', 'TIDE', 'LUMEN'] }],
       transitions: [
         { when: when('project', 'LUMEN'), effects: [{ flag: 'lumen_found', value: true }], log: [info("[registry] LUMEN: 책임자 한서윤. 2년 전 예산 종료로 중단, '시료 폐기 완료'로 기록됨.")], next: go('call') },
-        { when: [], effects: [], log: [info('[registry] 진행 중인 프로젝트다. run-0과는 관계가 없다.')], next: go('call') },
+        { miss: true, when: [], effects: [], log: [info('[registry] 진행 중인 프로젝트다. run-0과는 관계가 없다.')], next: go('call') },
       ],
     },
     // ---- Stage 3: 03_decision.py — what to do before morning ----

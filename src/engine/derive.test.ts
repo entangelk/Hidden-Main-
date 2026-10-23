@@ -185,6 +185,54 @@ describe('derive — pointer to the next file (architecture §5.2)', () => {
   })
 })
 
+describe('derive — retries in a search scene (SoT §3.8)', () => {
+  // triage becomes a search scene: action 3 is the miss, two runs in all.
+  const search: Scenario = structuredClone(scenario)
+  search.scenes[0].attempts = 2
+  search.scenes[0].transitions[2].miss = true
+  const miss = c('triage', { action: 3 })
+
+  it('stays on the scene after a miss with runs left: log plus a retry line, nothing else changes', () => {
+    const st = derive(search, at(miss))
+    expect(st.currentSceneId).toBe('triage')
+    expect(st.missesOnCurrent).toBe(1)
+    expect(st.flags).toEqual({})
+    expect(st.files['main.py'].text).not.toContain('def contain')
+    expect(st.files['main.py'].valueSlots.map((s) => s.sceneId)).toEqual(['triage'])
+    expect(st.log.map((l) => l.text).slice(-1)).toEqual(['[workspace] triage_alert(): 남은 기회 1번. 다른 값으로 다시 실행할 수 있다.'])
+  })
+
+  it('takes the miss like any transition on the last run, and says so', () => {
+    const st = derive(search, at(miss, miss))
+    expect(st.currentSceneId).toBe('contain')
+    expect(st.missesOnCurrent).toBe(0)
+    expect(st.log.map((l) => l.text)).toContain('[workspace] triage_alert(): 기회를 다 썼다. 다음으로 넘어간다.')
+  })
+
+  it('advances on a hit after a miss, and on a first-run hit (over-strict guard)', () => {
+    const afterMiss = derive(search, at(miss, c('triage', { action: 1 })))
+    expect(afterMiss.currentSceneId).toBe('contain')
+    expect(afterMiss.flags).toEqual({ analyzed: true })
+    expect(afterMiss.missesOnCurrent).toBe(0)
+    expect(derive(search, at(c('triage', { action: 1 }))).currentSceneId).toBe('contain')
+  })
+
+  it('ignores miss on a scene without attempts (it then advances at once)', () => {
+    const plain: Scenario = structuredClone(scenario)
+    plain.scenes[0].transitions[2].miss = true
+    const st = derive(plain, at(miss))
+    expect(st.currentSceneId).toBe('contain')
+    expect(st.missesOnCurrent).toBe(0)
+    expect(st.log.some((l) => l.text.includes('기회'))).toBe(false)
+  })
+
+  it('replays a save with misses the same way (apply accepts the retry)', () => {
+    const once = apply(search, at(), miss)
+    expect(once.choices).toHaveLength(1)
+    expect(apply(search, once, miss).choices).toHaveLength(2)
+  })
+})
+
 describe('derive — endings', () => {
   it('reaches "contained" only when isolated and reporting as closed', () => {
     const st = derive(scenario, at(c('triage', { action: 1 }), c('contain', { isolate: true }), c('report', { action: 1 })))

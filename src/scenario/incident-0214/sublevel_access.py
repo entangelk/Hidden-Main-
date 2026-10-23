@@ -38,6 +38,7 @@ class SublevelAccess:
         #   "B2-03" - 서쪽 창고
         #   "B2-07" - 동쪽 끝 보관실
         #   "B2-11" - 공조기계실
+        # 기회는 2번이다. 찾지 못하면 다른 값으로 다시 실행할 수 있다.
 
         room = "B2-03"
         # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.

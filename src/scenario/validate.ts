@@ -104,7 +104,7 @@ export function explore(scenario: Scenario, problems: string[]): Exploration {
       endings.add(state.ending)
       continue
     }
-    const key = `${state.currentSceneId}|${JSON.stringify(Object.entries(state.flags).sort())}`
+    const key = `${state.currentSceneId}|${state.missesOnCurrent}|${JSON.stringify(Object.entries(state.flags).sort())}`
     if (seen.has(key)) continue
     seen.add(key)
     const scene = scenes.get(state.currentSceneId!)!
@@ -185,6 +185,18 @@ export function staticProblems(scenario: Scenario): string[] {
     if (!parse(scene.id, scene.editableFields, defaults).ok) problems.push(`${scene.id}: template default is not a valid value`)
     const last = scene.transitions.at(-1)
     if (!last || last.when.length) problems.push(`${scene.id}: last transition must have an empty condition`)
+    // Retries (SoT §3.8): attempts and miss come together, and the comments tell the player.
+    const misses = scene.transitions.filter((t) => t.miss).length
+    if (scene.attempts !== undefined) {
+      if (!Number.isInteger(scene.attempts) || scene.attempts < 2) problems.push(`${scene.id}: attempts must be an integer of 2 or more`)
+      if (!misses) problems.push(`${scene.id}: attempts without a miss transition`)
+      if (!body.includes(`기회는 ${scene.attempts}번`)) problems.push(`${scene.id}: comments do not say 기회는 ${scene.attempts}번`)
+    } else if (misses) {
+      problems.push(`${scene.id}: miss transition without attempts`)
+    }
+    if (misses && misses === scene.transitions.length) problems.push(`${scene.id}: every transition is a miss`)
+    // A miss is "nothing found": effects would apply only on the last run, which reads as a trap.
+    if (scene.transitions.some((t) => t.miss && t.effects.length)) problems.push(`${scene.id}: a miss transition sets flags`)
     for (const t of scene.transitions) {
       if ('scene' in t.next && !sceneIds.has(t.next.scene)) problems.push(`${scene.id}: unknown next scene ${t.next.scene}`)
       if ('ending' in t.next && !endingIds.has(t.next.ending)) problems.push(`${scene.id}: unknown ending ${t.next.ending}`)

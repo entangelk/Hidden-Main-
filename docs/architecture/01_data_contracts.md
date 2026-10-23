@@ -1,6 +1,6 @@
 # 데이터 계약
 
-> 상태: **v0.7** · 2026-10-23 · 상위 기준: [`../SOT.md`](../SOT.md), [`00_overview.md`](00_overview.md)
+> 상태: **v0.8** · 2026-10-23 · 상위 기준: [`../SOT.md`](../SOT.md), [`00_overview.md`](00_overview.md)
 > 작성 규칙: [`../guides/data-contracts.md`](../guides/data-contracts.md), [`../guides/api-and-persistence-schemas.md`](../guides/api-and-persistence-schemas.md)
 > 정본 코드: 엔진 계약은 `src/engine/types.ts`, `SaveSnapshot`·`WorkspaceView`·`KeyValueStore`는 `src/persistence/save.ts`. 이 문서와 코드가 다르면 이 문서를 고친다.
 
@@ -69,6 +69,7 @@ type Scene = {
   functionName: string;       // 템플릿 안 사건 블록을 찾는 키
   editableFields: EditableField[];
   transitions: Transition[];  // 위에서부터 첫 번째로 조건이 맞는 것 적용. 마지막은 빈 조건(기본 경로)이어야 함
+  attempts?: number;          // 탐색형 사건만(SoT §3.8): 실행 기회 수(2 이상). miss 전이와 함께만 쓴다
 };
 
 type EditableField =
@@ -78,6 +79,7 @@ type EditableField =
   | { name: string; type: "string"; options: string[] };
 
 type Transition = {
+  miss?: true;                // 탐색형 사건의 '못 찾음': 기회가 남았으면 로그만 남기고 같은 사건에 머문다. 마지막 기회에는 보통 전이처럼 적용. effects는 비워 둔다(시나리오 검증)
   when: Condition;            // 이번 선택 값과 플래그에 대한 조건
   effects: Effect[];          // 플래그 설정
   log: LogLine[];             // Terminal 출력
@@ -150,6 +152,7 @@ type Progress = {
 ```
 
 - `Choice`는 parser가 만든 것을 그대로 쌓는다. 별도의 "적용된 선택" 타입을 두지 않는다.
+- 탐색형 사건의 틀린 시도(miss)도 `Choice`로 쌓는다. 같은 `sceneId`가 연달아 나올 수 있고, 재생하면 남은 기회까지 그대로 계산된다(SoT §3.8).
 - ideation §6.2 GameState의 항목과의 관계:
 
 | ideation 항목 | 이 설계에서 | 이유 |
@@ -176,6 +179,7 @@ type DerivedState = {
   log: LogLine[];                   // 전체 Terminal 기록 (재생으로 복원)
   files: Record<string, FileView>;  // 보이는 파일 전부(initialFiles + 해금된 스테이지) → 템플릿 + 스토리 오버레이 (플레이어 편집 적용 전)
   handoffs: Record<string, string>; // 진행이 떠난 파일 → 그 파일의 next_file()이 가리키는 파일 (재생 중 기록, 아키텍처 §5.2)
+  missesOnCurrent: number;          // 현재 사건에서 miss로 쓴 기회 수 (없거나 엔딩이면 0). 시나리오 검증의 상태 키에도 쓴다
 };
 
 type FileView = {

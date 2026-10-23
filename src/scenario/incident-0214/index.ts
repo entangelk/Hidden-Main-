@@ -22,7 +22,7 @@ export const incident0214 = {
   id: 'incident-0214',
   title: 'Incident 02:14',
   summary: '새벽 02:14, 서버 db-07이 외부로 대량의 데이터를 보낸다.',
-  version: 4,
+  version: 5,
   initialFiles: [
     { path: 'config/settings.py', content: settingsPy },
   ],
@@ -50,10 +50,11 @@ export const incident0214 = {
       id: 'schedule',
       stageId: 's1',
       functionName: 'check_schedule',
+      attempts: 3,
       editableFields: [{ name: 'hour', type: 'int', options: Array.from({ length: 24 }, (_, h) => h) }],
       transitions: [
         { when: when('hour', 2), effects: [{ flag: 'cron_found', value: true }], log: [info('[scheduler] 02시대 작업: sync_b2 — 담당자 없음, 매일 02:14 실행')], next: go('escalate') },
-        { when: [], effects: [], log: [info('[scheduler] 그 시간대에는 특이한 작업이 없다.')], next: go('escalate') },
+        { miss: true, when: [], effects: [], log: [info('[scheduler] 그 시간대에는 특이한 작업이 없다.')], next: go('escalate') },
       ],
     },
     {
@@ -71,10 +72,11 @@ export const incident0214 = {
       id: 'audit',
       stageId: 's2',
       functionName: 'audit_logins',
+      attempts: 2,
       editableFields: [{ name: 'target', type: 'string', options: ['admin', 'backup', 'guest'] }],
       transitions: [
         { when: when('target', 'backup'), effects: [{ flag: 'backup_suspect', value: true }], log: [info('[auth] backup: 02:13 로그인, 출발지 10.0.2.14')], next: go('review') },
-        { when: [], effects: [], log: [info('[auth] 감사한 계정에 특이 사항이 없다.')], next: go('review') },
+        { miss: true, when: [], effects: [], log: [info('[auth] 감사한 계정에 특이 사항이 없다.')], next: go('review') },
       ],
     },
     {
@@ -119,10 +121,11 @@ export const incident0214 = {
       id: 'limit',
       stageId: 's3',
       functionName: 'set_limit',
+      attempts: 2,
       editableFields: [{ name: 'limit', type: 'number', min: 0, max: 100 }],
       transitions: [
         { when: [{ ref: { choice: 'limit' }, op: '<=', value: 30 }], effects: [{ flag: 'spike_seen', value: true }], log: [info('[power] 02:14 B2-07 회로에서 2초간 급증 기록')], next: go('access') },
-        { when: [], effects: [], log: [info('[power] 기준을 넘는 급증이 없다.')], next: go('access') },
+        { miss: true, when: [], effects: [], log: [info('[power] 기준을 넘는 급증이 없다.')], next: go('access') },
       ],
     },
     // ---- Stage 4: sublevel_access.py — going down ----
@@ -140,6 +143,7 @@ export const incident0214 = {
       id: 'room',
       stageId: 's4',
       functionName: 'enter_room',
+      attempts: 2,
       editableFields: [{ name: 'room', type: 'string', options: ['B2-03', 'B2-07', 'B2-11'] }],
       transitions: [
         {
@@ -149,7 +153,7 @@ export const incident0214 = {
           next: go('device'),
         },
         { when: when('room', 'B2-07'), effects: [{ flag: 'device_found', value: true }], log: [info('[facility] B2-07 입장. 팬 소리가 들린다.')], next: go('device') },
-        { when: [], effects: [], log: [info('[facility] 입장. 조용하다.')], next: go('device') },
+        { miss: true, when: [], effects: [], log: [info('[facility] 입장. 조용하다.')], next: go('device') },
       ],
     },
     {

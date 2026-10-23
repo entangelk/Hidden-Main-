@@ -11,6 +11,7 @@ class ChamberMonitor:
         # @end
         #
         # 배양 챔버는 4대다. 들여다볼 챔버 번호를 chamber 값에 넣는다. 1~4 사이의 정수.
+        # 기회는 2번이다. 찾지 못하면 다른 값으로 다시 실행할 수 있다.
 
         chamber = 1
         # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
@@ -46,6 +47,7 @@ class ChamberMonitor:
         #   "ARGO"  - 효소 연구
         #   "TIDE"  - 해양 미생물 연구
         #   "LUMEN" - 재생 세포 연구
+        # 기회는 2번이다. 찾지 못하면 다른 값으로 다시 실행할 수 있다.
 
         project = "ARGO"
         # Ctrl+Enter(macOS는 Cmd+Enter)로 실행한다.
